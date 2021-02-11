@@ -66,7 +66,27 @@ private:
     Nullable!T nullable_;
 }
 
-NullableRange!T nullableRange(T)(T value)
+///
+@nogc nothrow pure @safe unittest
+{
+    assert(NullableRange!int(99).front == 99);
+
+    auto x = NullableRange!int(100);
+    assert(x.front == 100);
+    
+    x.front = 1234;
+    assert(x.front == 1234);
+    x.popFront;
+    assert(x.empty == true);
+}
+
+/**
+Params:
+    value = inner value.
+Returns:
+    nullable range value.
+*/
+NullableRange!T nullableRange(T)(inout T value)
 {
     return NullableRange!T(value);
 }
@@ -74,7 +94,6 @@ NullableRange!T nullableRange(T)(T value)
 ///
 @nogc nothrow pure @safe unittest
 {
-
     assert(99.nullableRange.front == 99);
 
     auto x = 100.nullableRange;
@@ -84,5 +103,30 @@ NullableRange!T nullableRange(T)(T value)
     assert(x.front == 1234);
     x.popFront;
     assert(x.empty == true);
+}
+
+/**
+Params:
+    value = inner value.
+Returns:
+    nullable range value.
+*/
+NullableRange!T toRange(T)(inout Nullable!T value)
+{
+    return (value.isNull) ? typeof(return).init : NullableRange!T(value.get);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.typecons : nullable;
+    auto range = 100.nullable.toRange;
+    assert(range.front == 100);
+    assert(!range.empty);
+    range.popFront();
+    assert(range.empty);
+
+    auto emptyRange = Nullable!int.init.toRange;
+    assert(emptyRange.empty);
 }
 
