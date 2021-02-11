@@ -1,0 +1,10 @@
+{
+	"authors": [
+		"outland.karasu@gmail.com"
+	],
+	"copyright": "Copyright © 2021, outland.karasu@gmail.com",
+	"description": "D library for personal use.",
+	"license": "BSL-1.0",
+	"name": "karasux",
+	"target": "sourceLibrary"
+}
