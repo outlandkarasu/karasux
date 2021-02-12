@@ -30,7 +30,7 @@ struct NullableRange(T)
        content reference. 
     */
     ref inout(T) front() inout pure @nogc @property nothrow @safe
-    in (!empty)
+        in (!empty)
     {
         return nullable_.get;
     }
@@ -78,6 +78,16 @@ private:
     assert(x.front == 1234);
     x.popFront;
     assert(x.empty == true);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    auto x = NullableRange!int(99).asNullable;
+    assert(!x.isNull);
+    assert(x.get == 99);
+    x.nullify();
+    assert(x.isNull);
 }
 
 /**
