@@ -28,4 +28,11 @@ jobs:
           compiler: ${{ matrix.dc }}
 
       - name: Run tests
-        run: dub -q test
+        run: dub -q test -b unittest-cov
+
+      - name: upload coverage to CodeCov
+        uses: codecov/codecov-action@v1
+        with:
+          flags: unittests
+          verbose: true
+
