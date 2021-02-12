@@ -4,7 +4,7 @@ Random generator.
 module karasux.random;
 
 import std.math : log, cos, PI, sqrt;
-import std.random : uniform;
+import std.random : uniform, rndGen;
 import std.traits : isFloatingPoint;
 
 /**
@@ -45,5 +45,26 @@ T gaussianDistributionRandom(T, UniformRandomNumberGenerator)(ref UniformRandomN
     auto rng = Rng();
     immutable result = gaussianDistributionRandom!real(rng);
     assert(result.isClose(cast(real) -0x9.6b55f2257e218fep-3));
+}
+
+/**
+Generate Gaussian distribution random number.
+
+Params:
+    T = number type.
+Returns;
+    random value.
+*/
+T gaussianDistributionRandom(T)()
+{
+    auto rng = rndGen;
+    return gaussianDistributionRandom!T(rng);
+}
+
+///
+@safe unittest
+{
+    auto value = gaussianDistributionRandom!real;
+    static assert(is(typeof(value) == real));
 }
 
