@@ -57,8 +57,7 @@ Returns;
 */
 T gaussianDistributionRandom(T)()
 {
-    auto rng = rndGen;
-    return gaussianDistributionRandom!T(rng);
+    return gaussianDistributionRandom!T(rndGen);
 }
 
 ///
@@ -66,5 +65,25 @@ T gaussianDistributionRandom(T)()
 {
     auto value = gaussianDistributionRandom!real;
     static assert(is(typeof(value) == real));
+
+    /*
+    import std.math : round;
+    import std.stdio : writefln;
+    import std.range : generate, take, repeat;
+    import std.array : array;
+    import std.algorithm : count, filter, sort;
+
+    auto values = generate!(() => gaussianDistributionRandom!real()).take(100000);
+    size_t[int] histogram;
+    foreach (v; values)
+    {
+        histogram.update(cast(int) round(v * 10.0), () => 1, (size_t n) => n + 1);
+    }
+
+    foreach (i; histogram.byKey.array.sort)
+    {
+        writefln("%3d: %s", i, '*'.repeat(histogram[i] / 100));
+    }
+    */
 }
 
