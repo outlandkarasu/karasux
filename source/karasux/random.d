@@ -43,8 +43,10 @@ T gaussianDistributionRandom(T, UniformRandomNumberGenerator)(ref UniformRandomN
     static assert(isUniformRNG!Rng);
 
     auto rng = Rng();
-    immutable result = gaussianDistributionRandom!real(rng);
-    assert(result.isClose(cast(real) -0x9.6b55f2257e218fep-3));
+    immutable result1 = gaussianDistributionRandom!real(rng);
+    assert(result1.isClose(cast(real) -0x9.6b55f2257e218fep-3));
+    immutable result2 = gaussianDistributionRandom!real(rng);
+    assert(result2.isClose(cast(real) -0x9.6b55f2257e218fep-3));
 }
 
 /**
