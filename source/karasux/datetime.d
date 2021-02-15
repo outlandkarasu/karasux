@@ -42,13 +42,13 @@ nothrow pure @safe unittest
 Returns;
     Current timestamp since UNIX epoch.
 */
-Duration currentUnixTime() nothrow @safe
+Duration currentUnixTime() @safe
 {
     return Clock.currTime(timeZoneUTC).sinceUnixEpoch;
 }
 
 ///
-nothrow @safe unittest
+@safe unittest
 {
     assert(currentUnixTime.total!"seconds" == Clock.currTime(timeZoneUTC).toUnixTime);
 }
