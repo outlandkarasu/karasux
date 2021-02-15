@@ -4,7 +4,7 @@ Datetime extension.
 module karasux.datetime;
 
 import core.time : Duration;
-import std.datetime : UTC, SysTime, unixTimeToStdTime;
+import std.datetime : Clock, UTC, SysTime, unixTimeToStdTime;
 
 /**
 Singleton UTC timezone.
@@ -36,5 +36,20 @@ nothrow pure @safe unittest
 
     assert(UNIX_EPOCH.sinceUnixEpoch == Duration.zero);
     assert(SysTime(unixTimeToStdTime(1000), timeZoneUTC).sinceUnixEpoch == 1000.seconds);
+}
+
+/**
+Returns;
+    Current timestamp since UNIX epoch.
+*/
+Duration currentUnixTime() nothrow @safe
+{
+    return Clock.currTime(timeZoneUTC).sinceUnixEpoch;
+}
+
+///
+nothrow @safe unittest
+{
+    assert(currentUnixTime.total!"seconds" == Clock.currTime(timeZoneUTC).toUnixTime);
 }
 
