@@ -5,7 +5,7 @@ module karasux.decimal;
 
 import std.algorithm : max;
 import std.ascii : isDigit;
-import std.math : ceil, round, log10, abs;
+import std.math : ceil, floor, log10, abs;
 import std.string : format;
 import std.traits : isFloatingPoint;
 import std.typecons : Nullable, nullable, Tuple, tuple;
@@ -234,7 +234,7 @@ struct Decimal
     static Decimal from(T)(auto scope ref const(T) value, ubyte exponent) @nogc nothrow pure @safe
         if (isFloatingPoint!T)
     {
-        return Decimal(cast(long) round(value * (10.0 ^^ exponent)), exponent);
+        return Decimal(cast(long) floor(value * (10.0 ^^ exponent) + 0.5), exponent);
     }
 
     ///
