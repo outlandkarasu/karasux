@@ -173,3 +173,37 @@ nothrow pure @safe unittest
     assert(Nullable!int.init.getMap!((v) => v.to!string).isNull);
 }
 
+/**
+Get and flat map Nullable content.
+
+Params:
+    F = map function.
+    T = Nullable content type.
+    value = Nullable value.
+Returns:
+    mapped Nullable value.
+*/
+auto getFlat(alias F, T)(Nullable!T value)
+{
+    alias fun = unaryFun!F;
+    alias R = typeof(fun(value.get));
+    static assert(is(R : Nullable!S, S), "required Nullable type. current: " ~ R.stringof);
+    return (value.isNull) ? R.init : fun(value.get);
+}
+
+///
+nothrow pure @safe unittest
+{
+    import std.conv : to;
+
+    Nullable!int value = 100.nullable;
+    auto mapped = value.getFlat!((v) => v.to!string.nullable);
+
+    static assert(is(typeof(mapped) == Nullable!string));
+    assert(!mapped.isNull);
+    assert(mapped.get == "100");
+
+    assert(Nullable!int.init.getFlat!((v) => v.to!string.nullable).isNull);
+    assert(Nullable!int.init.getFlat!((v) => Nullable!string.init).isNull);
+}
+
