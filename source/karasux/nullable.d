@@ -3,8 +3,10 @@ Nullable extension.
 */
 module karasux.nullable;
 
+import std.functional : unaryFun;
 import std.range : isInputRange;
-import std.typecons : Nullable;
+import std.traits : ReturnType, isCallable;
+import std.typecons : Nullable, nullable;
 
 /**
 Nullable as range.
@@ -138,5 +140,36 @@ NullableRange!T toRange(T)(inout Nullable!T value)
 
     auto emptyRange = Nullable!int.init.toRange;
     assert(emptyRange.empty);
+}
+
+/**
+Get and map Nullable content.
+
+Params:
+    F = map function.
+    T = Nullable content type.
+    value = Nullable value.
+Returns:
+    mapped Nullable value.
+*/
+auto getMap(alias F, T)(Nullable!T value)
+{
+    alias fun = unaryFun!F;
+    alias R = Nullable!(typeof(fun(value.get)));
+    return (value.isNull) ? R.init : nullable(fun(value.get));
+}
+
+///
+nothrow pure @safe unittest
+{
+    import std.conv : to;
+    Nullable!int value = 100.nullable;
+    auto mapped = value.getMap!((v) => v.to!string);
+
+    static assert(is(typeof(mapped) == Nullable!string));
+    assert(!mapped.isNull);
+    assert(mapped.get == "100");
+
+    assert(Nullable!int.init.getMap!((v) => v.to!string).isNull);
 }
 
