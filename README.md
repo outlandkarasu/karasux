@@ -8,10 +8,13 @@ D library for personal use.
 
 ## Modules
 
-* `karasux.nullable`
-    * `Nullable` as range wrapper.
 * `karasux.datetime`
     * UNIX timestamp utilities.
+* `karasux.decimal`
+    * fixed point decimal value.
+* `karasux.nullable`
+    * `Nullable` as range wrapper.
+    * `Nullable` utilities.
 * `karasux.random`
     * Gaussian distribution random generator.
 
