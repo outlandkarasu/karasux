@@ -223,6 +223,28 @@ struct Decimal
     }
 
     /**
+    Calculate mul.
+
+    Params:
+        rhs = other hand value.
+    Returns:
+        calculated price.
+    */
+    Decimal opBinary(string op)(auto scope ref const(Decimal) rhs) const @nogc nothrow pure
+        if (op == "*")
+    {
+        return Decimal(mantissa * rhs.mantissa, cast(ubyte)(exponent + rhs.exponent));
+    }
+
+    ///
+    @nogc nothrow pure unittest
+    {
+        immutable a = Decimal(123456, 3);
+        assert(a * Decimal(2, 0) == Decimal(246912, 3));
+        assert(a * Decimal(2, 1) == Decimal(246912, 4));
+    }
+
+    /**
     Convert from floating point.
 
     Params:
