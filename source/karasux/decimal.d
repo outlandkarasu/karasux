@@ -406,6 +406,27 @@ struct Decimal
         assert(Decimal.fromString("+.123456") == Decimal(123456, 6));
         assert(Decimal.fromString("-.123456") == Decimal(-123456, 6));
     }
+
+    /**
+    Calcurate ceil value.
+
+    Returns:
+        ceil value.
+    */
+    Decimal ceil() const @nogc nothrow pure scope
+    {
+        immutable scale = (cast(long) 10) ^^ exponent;
+        immutable rest = mantissa % scale;
+        return Decimal((mantissa / scale) + (rest > 0 ? 1 : 0), 0);
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(Decimal(10, 1).ceil == Decimal(1, 0));
+        assert(Decimal(11, 1).ceil == Decimal(2, 0));
+        assert(Decimal(10001, 4).ceil == Decimal(2, 0));
+    }
 }
 
 /**
