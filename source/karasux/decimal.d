@@ -5,7 +5,7 @@ module karasux.decimal;
 
 import std.algorithm : max;
 import std.ascii : isDigit;
-import std.math : ceil, floor, log10, abs;
+import std.math : floor, log10, abs;
 import std.string : format;
 import std.traits : isFloatingPoint;
 import std.typecons : Nullable, nullable, Tuple, tuple;
@@ -256,7 +256,7 @@ struct Decimal
     static Decimal from(T)(auto scope ref const(T) value, ubyte exponent) @nogc nothrow pure @safe
         if (isFloatingPoint!T)
     {
-        return Decimal(cast(long) floor(value * (10.0 ^^ exponent) + 0.5), exponent);
+        return Decimal(cast(long) .floor(value * (10.0 ^^ exponent) + 0.5), exponent);
     }
 
     ///
@@ -405,6 +405,27 @@ struct Decimal
         assert(Decimal.fromString("-123.456") == Decimal(-123456, 3));
         assert(Decimal.fromString("+.123456") == Decimal(123456, 6));
         assert(Decimal.fromString("-.123456") == Decimal(-123456, 6));
+    }
+
+    /**
+    Calcurate floor value.
+
+    Returns:
+        floor value.
+    */
+    Decimal floor() const @nogc nothrow pure scope
+    {
+        immutable scale = (cast(long) 10) ^^ exponent;
+        return Decimal(mantissa / scale, 0);
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(Decimal(10, 1).floor == Decimal(1, 0));
+        assert(Decimal(11, 1).floor == Decimal(1, 0));
+        assert(Decimal(10001, 4).floor == Decimal(1, 0));
+        assert(Decimal(20001, 4).floor == Decimal(2, 0));
     }
 
     /**
