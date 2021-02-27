@@ -62,13 +62,13 @@ struct Timestamp
     Returns:
         now timestamp.
     */
-    static @property Timestamp now() nothrow @safe
+    static @property Timestamp now() @safe
     {
         return Timestamp(Clock.currTime(timeZoneUTC).stdTime);
     }
 
     ///
-    nothrow @safe unittest
+    @safe unittest
     {
         immutable now = Clock.currTime(timeZoneUTC).stdTime;
         assert(Timestamp.now.stdTime >= now);
