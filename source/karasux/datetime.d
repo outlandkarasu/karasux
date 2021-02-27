@@ -108,6 +108,24 @@ struct Timestamp
     }
 
     /**
+    add or subtract duration.
+    */
+    Timestamp opBinary(string op)(scope auto ref const(Duration) rhs)
+        const @nogc nothrow @safe scope if (op == "-" || op == "+")
+    {
+        return Timestamp(mixin("stdTime " ~ op ~ ` rhs.total!"hnsecs"`));
+    }
+
+    ///
+    @nogc nothrow @safe unittest
+    {
+        import core.time : dur;
+        immutable t = Timestamp(1000);
+        assert(t + dur!"seconds"(1) == Timestamp(1000 + dur!"seconds"(1).total!"hnsecs"));
+        assert(t - dur!"hnsecs"(100) == Timestamp(900));
+    }
+
+    /**
     Round down time by unit duration.
 
     Params:
