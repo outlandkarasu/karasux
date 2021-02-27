@@ -3,7 +3,7 @@ Datetime extension.
 */
 module karasux.datetime;
 
-import core.time : Duration;
+import core.time : Duration, hnsecs;
 import std.datetime : Clock, UTC, SysTime, unixTimeToStdTime;
 
 /**
@@ -51,5 +51,172 @@ Duration currentUnixTime() @safe
 @safe unittest
 {
     assert(currentUnixTime.total!"seconds" == Clock.currTime(timeZoneUTC).toUnixTime);
+}
+
+/**
+Timestamp type.
+*/
+struct Timestamp 
+{
+    /**
+    Returns:
+        now timestamp.
+    */
+    static @property Timestamp now() @safe
+    {
+        return Timestamp(Clock.currTime(timeZoneUTC).stdTime);
+    }
+
+    ///
+    @safe unittest
+    {
+        immutable now = Clock.currTime(timeZoneUTC).stdTime;
+        assert(Timestamp.now.stdTime >= now);
+    }
+
+    /**
+    Returns:
+        timestamp ISO8601 string reperesentation.
+    */
+    string toString() const nothrow @safe scope
+    {
+        return SysTime(stdTime, timeZoneUTC).toISOExtString();
+    }
+
+    /**
+    Parse timestamp.
+
+    Params:
+        timestamp = timestamp string.
+    Returns:
+        parsed timestamp.
+    */
+    static Timestamp fromString(string timestamp) @safe
+    {
+        return Timestamp(SysTime.fromISOExtString(timestamp).stdTime);
+    }
+
+    /**
+    calculate duration.
+    */
+    Duration opBinary(string op)(scope auto ref const(Timestamp) rhs)
+        const @nogc nothrow @safe scope if (op == "-")
+    {
+        return hnsecs(mixin("stdTime " ~ op ~ " rhs.stdTime"));
+    }
+
+    ///
+    @nogc nothrow @safe unittest
+    {
+        immutable t1 = Timestamp(1000);
+        immutable t2 = Timestamp(500);
+        assert(t1 - t2 == hnsecs(500));
+        assert(t2 - t1 == hnsecs(-500));
+    }
+
+    /**
+    add or subtract duration.
+    */
+    Timestamp opBinary(string op)(scope auto ref const(Duration) rhs)
+        const @nogc nothrow @safe scope if (op == "-" || op == "+")
+    {
+        return Timestamp(mixin("stdTime " ~ op ~ ` rhs.total!"hnsecs"`));
+    }
+
+    ///
+    @nogc nothrow @safe unittest
+    {
+        import core.time : dur;
+        immutable t = Timestamp(1000);
+        assert(t + dur!"seconds"(1) == Timestamp(1000 + dur!"seconds"(1).total!"hnsecs"));
+        assert(t - dur!"hnsecs"(100) == Timestamp(900));
+    }
+
+    /**
+    Round down time by unit duration.
+
+    Params:
+        unit = unit duration.
+    Returns:
+        Rounded down timestamp.
+    */
+    Timestamp roundDown(Duration unit) const @nogc nothrow pure @safe scope
+    {
+        immutable total = unit.total!"hnsecs";
+        return (total == 0) ? this : Timestamp(stdTime - stdTime % total);
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        import core.time : hnsecs, dur;
+        immutable t = Timestamp(1234567890);
+        assert(t.roundDown(dur!"seconds"(1)) == Timestamp(1230000000));
+        assert(t.roundDown(dur!"msecs"(1)) == Timestamp(1234560000));
+    }
+
+    /**
+    Compare two timestmaps.
+
+    Params:
+        rhs = other hand side.
+    Returns:
+        compare result.
+    */
+    int opCmp()(auto scope ref const(Timestamp) rhs) const @nogc nothrow pure @safe scope
+    {
+        // prevent overflow.
+        immutable diff = cast(long)(stdTime - rhs.stdTime);
+        return (diff < 0) ? -1 : ((diff > 0) ? 1 : 0);
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        immutable t1 = Timestamp(12345678912340);
+        immutable t2 = Timestamp(12345678912341);
+        assert(t1 < t2);
+        assert(t1 <= t2);
+        assert(t2 > t1);
+        assert(t2 >= t1);
+
+        assert(!(t1 < t1));
+        assert(t1 <= t1);
+        assert(!(t1 > t1));
+        assert(t1 >= t1);
+    }
+
+    /**
+    Compare two timestmaps.
+
+    Params:
+        rhs = other hand side.
+    Returns:
+        compare result.
+    */
+    bool opEquals()(auto scope ref const(Timestamp) rhs) const @nogc nothrow pure @safe scope
+    {
+        return stdTime == rhs.stdTime;
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        immutable t1 = Timestamp(12345678912340);
+        immutable t2 = Timestamp(12345678912341);
+        assert(t1 == t1);
+        assert(t2 == t2);
+        assert(t1 != t2);
+        assert(t2 != t1);
+    }
+
+    ulong stdTime;
+}
+
+///
+@safe unittest
+{
+    immutable t = Timestamp.fromString("2021-01-02T03:04:05.678Z");
+    assert(t.toString() == "2021-01-02T03:04:05.678+00:00");
 }
 
