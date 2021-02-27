@@ -67,6 +67,13 @@ struct Timestamp
         return Timestamp(Clock.currTime(timeZoneUTC).stdTime);
     }
 
+    ///
+    nothrow @safe unittest
+    {
+        immutable now = Clock.currTime(timeZoneUTC).stdTime;
+        assert(Timestamp.now.stdTime >= now);
+    }
+
     /**
     Returns:
         timestamp ISO8601 string reperesentation.
