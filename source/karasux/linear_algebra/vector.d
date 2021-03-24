@@ -3,6 +3,7 @@ Vector module.
 */
 module karasux.linear_algebra.vector;
 
+import std.math : isClose;
 import std.traits : isNumeric;
 
 /**
@@ -119,8 +120,6 @@ private:
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose;
-
     immutable v = Vector!3([1, 2, 3]);
     assert(v[0].isClose(1.0));
     assert(v[1].isClose(2.0));
@@ -130,8 +129,6 @@ private:
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose;
-
     auto v = Vector!3([1, 2, 3]);
     v[0] = 2.0f;
     v[1] = 3.0f;
@@ -153,8 +150,6 @@ private:
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose;
-
     auto v = Vector!3([1, 2, 3]);
     immutable u = Vector!3([2, 3, 4]);
     v += u;
@@ -167,7 +162,7 @@ private:
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose, isNaN;
+    import std.math : isNaN;
 
     Vector!3 v;
     assert(v[0].isNaN);
@@ -188,7 +183,7 @@ private:
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose, isNaN;
+    import std.math : isNaN;
 
     Vector!3 v;
     v.fill(1.0);
@@ -201,9 +196,43 @@ private:
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose;
-
     immutable v = Vector!3([1, 2, 3]);
     assert(isClose(*(v.ptr), 1.0));
+}
+
+/**
+isClose for vector.
+
+Params:
+    a = vector.
+    b = other vector.
+Returns:
+    true if both vector is close.
+*/
+bool isClose(size_t D, E)(
+    auto scope ref const(Vector!(D, E)) a,
+    auto scope ref const(Vector!(D, E)) b) @nogc nothrow pure @safe
+{
+    import std.math : mathIsClose = isClose;
+
+    foreach (i; 0 .. D)
+    {
+        if (!mathIsClose(a[i], b[i]))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    immutable v = Vector!3([1, 2, 3]);
+    assert(v.isClose(Vector!3([1, 2, 3])));
+    assert(!v.isClose(Vector!3([0.9, 2, 3])));
+    assert(!v.isClose(Vector!3([1, 1.9, 3])));
+    assert(!v.isClose(Vector!3([1, 2, 2.9])));
 }
 
