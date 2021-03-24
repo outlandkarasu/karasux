@@ -6,6 +6,8 @@ module karasux.linear_algebra.matrix;
 import std.math : cos, sin;
 import std.traits : isNumeric;
 
+import karasux.linear_algebra.vector : Vector;
+
 /**
 Matrix structure.
 
@@ -486,5 +488,59 @@ private:
             assert(m[i, j].isClose((i != j) ? 0.0 : 1.0));
         }
     }
+}
+
+/**
+Matrix multiply for vector.
+
+Params:
+    result = result vector.
+    m = argument matrix.
+    v = argument vector.
+Returns:
+    result vector.
+*/
+ref auto mul(size_t D, E)(
+    return scope ref Vector!(D, E) result,
+    auto scope ref const(Matrix!(D, D, E)) m,
+    auto scope ref const(Vector!(D, E)) v) @nogc nothrow pure @safe
+{
+    foreach (row; 0 .. D)
+    {
+        E value = E(0);
+        foreach (column; 0 .. D)
+        {
+            value += m[row, column] * v[column];
+        }
+        result[row] = value;
+    }
+    return result;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(4, 4).unit;
+    immutable v = Vector!4([1, 2, 3, 0]);
+    auto result = Vector!4();
+    result.mul(m, v);
+    assert(result == v);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(4, 4).scale(2.0, 3.0, 4.0);
+    immutable v = Vector!4([1, 2, 3, 0]);
+    auto result = Vector!4();
+    result.mul(m, v);
+    assert(result[0].isClose(2.0));
+    assert(result[1].isClose(6.0));
+    assert(result[2].isClose(12.0));
+    assert(result[3].isClose(0.0));
 }
 
