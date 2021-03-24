@@ -527,15 +527,13 @@ ref auto mul(size_t D, E)(
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose;
+    import karasux.linear_algebra.vector : isClose;
 
     immutable m = Matrix!(4, 4).scale(2.0, 3.0, 4.0);
     immutable v = Vector!4([1, 2, 3, 0]);
     auto result = Vector!4();
     result.mul(m, v);
-    assert(result[0].isClose(2.0));
-    assert(result[1].isClose(6.0));
-    assert(result[2].isClose(12.0));
-    assert(result[3].isClose(0.0));
+
+    assert(result.isClose(Vector!4([2, 6, 12, 0])));
 }
 
