@@ -6,6 +6,10 @@ module karasux.linear_algebra.vector;
 import std.math : isClose;
 import std.traits : isNumeric;
 
+import karasux.linear_algebra.matrix : Matrix;
+
+@safe:
+
 /**
 Vector structure.
 
@@ -113,12 +117,37 @@ struct Vector(size_t D, E = float)
         return &elements_[0];
     }
 
+    /**
+    Matrix multiply for vector.
+
+    Params:
+        m = argument matrix.
+        v = argument vector.
+    Returns:
+        result vector.
+    */
+    ref typeof(this) mul()(
+        auto scope ref const(Matrix!(D, D, E)) m,
+        auto scope ref const(Vector!(D, E)) v) @nogc nothrow pure return scope
+    {
+        foreach (row; 0 .. D)
+        {
+            E value = E(0);
+            foreach (column; 0 .. D)
+            {
+                value += m[row, column] * v[column];
+            }
+            elements_[row] = value;
+        }
+        return this;
+    }
+
 private:
     E[D] elements_;
 }
 
 ///
-@nogc nothrow pure @safe unittest
+@nogc nothrow pure unittest
 {
     immutable v = Vector!3([1, 2, 3]);
     assert(v[0].isClose(1.0));
@@ -127,7 +156,7 @@ private:
 }
 
 ///
-@nogc nothrow pure @safe unittest
+@nogc nothrow pure unittest
 {
     auto v = Vector!3([1, 2, 3]);
     v[0] = 2.0f;
@@ -148,7 +177,7 @@ private:
 }
 
 ///
-@nogc nothrow pure @safe unittest
+@nogc nothrow pure unittest
 {
     auto v = Vector!3([1, 2, 3]);
     immutable u = Vector!3([2, 3, 4]);
@@ -160,7 +189,7 @@ private:
 }
 
 ///
-@nogc nothrow pure @safe unittest
+@nogc nothrow pure unittest
 {
     import std.math : isNaN;
 
@@ -181,7 +210,7 @@ private:
 }
 
 ///
-@nogc nothrow pure @safe unittest
+@nogc nothrow pure unittest
 {
     import std.math : isNaN;
 
@@ -194,10 +223,35 @@ private:
 }
 
 ///
-@nogc nothrow pure @safe unittest
+@nogc nothrow pure unittest
 {
     immutable v = Vector!3([1, 2, 3]);
     assert(isClose(*(v.ptr), 1.0));
+}
+
+///
+@nogc nothrow pure unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(4, 4).unit;
+    immutable v = Vector!4([1, 2, 3, 0]);
+    auto result = Vector!4();
+    result.mul(m, v);
+    assert(result == v);
+}
+
+///
+@nogc nothrow pure unittest
+{
+    import karasux.linear_algebra.vector : isClose;
+
+    immutable m = Matrix!(4, 4).scale(2.0, 3.0, 4.0);
+    immutable v = Vector!4([1, 2, 3, 0]);
+    auto result = Vector!4();
+    result.mul(m, v);
+
+    assert(result.isClose(Vector!4([2, 6, 12, 0])));
 }
 
 /**
@@ -211,7 +265,7 @@ Returns:
 */
 bool isClose(size_t D, E)(
     auto scope ref const(Vector!(D, E)) a,
-    auto scope ref const(Vector!(D, E)) b) @nogc nothrow pure @safe
+    auto scope ref const(Vector!(D, E)) b) @nogc nothrow pure 
 {
     import std.math : mathIsClose = isClose;
 
@@ -227,7 +281,7 @@ bool isClose(size_t D, E)(
 }
 
 ///
-@nogc nothrow pure @safe unittest
+@nogc nothrow pure unittest
 {
     immutable v = Vector!3([1, 2, 3]);
     assert(v.isClose(Vector!3([1, 2, 3])));
