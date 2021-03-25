@@ -473,16 +473,34 @@ private:
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose;
+    import karasux.linear_algebra.vector : isClose;
 
     immutable m = Matrix!(4, 4).translate(2.0, 3.0, 4.0);
     immutable v = Vector!4([1.0, 2.0, 3.0, 1.0]);
     auto result = Vector!4();
     result.mul(m, v);
-    assert(result[0].isClose(3.0));
-    assert(result[1].isClose(5.0));
-    assert(result[2].isClose(7.0));
-    assert(result[3].isClose(1.0));
+
+    assert(result.isClose(Vector!4([3, 5, 7, 1])));
+}
+
+///
+@safe unittest
+{
+    import std.conv : to;
+    import karasux.linear_algebra.vector : isClose;
+
+    immutable m = Matrix!(4, 4).rotateX(0.5);
+    immutable x = Vector!4([1.0, 0.0, 0.0, 1.0]);
+    immutable y = Vector!4([0.0, 1.0, 0.0, 1.0]);
+    immutable z = Vector!4([0.0, 0.0, 1.0, 1.0]);
+
+    auto result = Vector!4();
+    result.mul(m, x);
+    assert(result.isClose(x));
+    result.mul(m, y);
+    assert(result.isClose(Vector!4([0.0, cos(0.5), sin(0.5), 1.0])), result.to!string);
+    result.mul(m, z);
+    assert(result.isClose(Vector!4([0.0, -sin(0.5), cos(0.5), 1.0])), result.to!string);
 }
 
 /**
