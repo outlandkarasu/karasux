@@ -521,6 +521,25 @@ private:
     assert(result.isClose(Vector!4([sin(0.5), 0.0, cos(0.5), 1.0])));
 }
 
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.vector : isClose;
+
+    immutable m = Matrix!(4, 4).rotateZ(0.5);
+    immutable x = Vector!4([1.0, 0.0, 0.0, 1.0]);
+    immutable y = Vector!4([0.0, 1.0, 0.0, 1.0]);
+    immutable z = Vector!4([0.0, 0.0, 1.0, 1.0]);
+
+    auto result = Vector!4();
+    result.mul(m, x);
+    assert(result.isClose(Vector!4([cos(0.5), sin(0.5), 0.0, 1.0])));
+    result.mul(m, y);
+    assert(result.isClose(Vector!4([-sin(0.5), cos(0.5), 0.0, 1.0])));
+    result.mul(m, z);
+    assert(result.isClose(z));
+}
+
 /**
 Matrix multiply for vector.
 
