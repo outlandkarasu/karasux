@@ -261,7 +261,7 @@ Params:
     a = vector.
     b = other vector.
 Returns:
-    true if both vector is close.
+    true if both vector are close.
 */
 bool isClose(size_t D, E)(
     auto scope ref const(Vector!(D, E)) a,
