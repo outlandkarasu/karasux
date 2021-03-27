@@ -542,3 +542,56 @@ private:
     assert(result.isClose(z));
 }
 
+/**
+isClose for matrix.
+
+Params:
+    R = rows.
+    C = columns.
+    a = matrix.
+    b = other matrix.
+Returns:
+    true if both matrix are close.
+*/
+bool isClose(size_t R, size_t C, E)(
+    auto scope ref const(Matrix!(R, C, E)) a,
+    auto scope ref const(Matrix!(R, C, E)) b) @nogc nothrow pure 
+{
+    import std.math : mathIsClose = isClose;
+
+    foreach (c; 0 .. C)
+    {
+        foreach (r; 0 .. R)
+        {
+            if (!mathIsClose(a[r, c], b[r, c]))
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    immutable a = Matrix!(4, 4).fromRows([
+       [1, 2, 3, 4],
+       [5, 6, 7, 8],
+       [9, 10, 11, 12],
+       [13, 14, 15, 16],
+    ]);
+
+    assert(a.isClose(a));
+
+    auto b = Matrix!(4, 4)();
+    b = a;
+    assert(a.isClose(b));
+    assert(b.isClose(a));
+
+    b[0, 0] = 100.0;
+    assert(!a.isClose(b));
+    assert(!b.isClose(a));
+}
+
