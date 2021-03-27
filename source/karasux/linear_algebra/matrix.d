@@ -577,10 +577,10 @@ bool isClose(size_t R, size_t C, E)(
 @nogc nothrow pure @safe unittest
 {
     immutable a = Matrix!(4, 4).fromRows([
-       [1, 2, 3, 4],
-       [5, 6, 7, 8],
-       [9, 10, 11, 12],
-       [13, 14, 15, 16],
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+        [9, 10, 11, 12],
+        [13, 14, 15, 16],
     ]);
 
     assert(a.isClose(a));

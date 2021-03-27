@@ -68,7 +68,7 @@ void luDecomposition(size_t N, E)(
         foreach (column; row .. N)
         {
             E sum = E(0);
-            foreach (lc; 0 .. column)
+            foreach (lc; 0 .. row)
             {
                 sum += l[row, lc] * u[lc, column];
             }
@@ -80,7 +80,7 @@ void luDecomposition(size_t N, E)(
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose;
+    import karasux.linear_algebra.matrix : isClose;
 
     immutable m = Matrix!(2, 2).fromRows([
         [4.0f, 3.0f],
@@ -89,14 +89,76 @@ void luDecomposition(size_t N, E)(
     auto u = Matrix!(2, 2)();
     m.luDecomposition(l, u);
 
-    assert(l[0, 0].isClose(1));
-    assert(l[0, 1].isClose(0));
-    assert(l[1, 0].isClose(1.5));
-    assert(l[1, 1].isClose(1));
+    assert(l.isClose(Matrix!(2, 2).fromRows([
+        [1.0, 0.0],
+        [1.5, 1.0]
+    ])));
+    assert(u.isClose(Matrix!(2, 2).fromRows([
+        [4.0, 3.0],
+        [0.0, -1.5]
+    ])));
 
-    assert(u[0, 0].isClose(4));
-    assert(u[0, 1].isClose(3));
-    assert(u[1, 0].isClose(0));
-    assert(u[1, 1].isClose(-1.5));
+    auto mul = Matrix!(2, 2)();
+    mul.mul(l, u);
+    assert(mul.isClose(m));
+}
+
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.matrix : isClose;
+
+    immutable m = Matrix!(3, 3).fromRows([
+        [5.0, 6.0, 7.0],
+        [10.0, 20.0, 23.0],
+        [15.0, 50.0, 67.0],
+    ]);
+    auto l = Matrix!(3, 3)();
+    auto u = Matrix!(3, 3)();
+    m.luDecomposition(l, u);
+    assert(l.isClose(Matrix!(3, 3).fromRows([
+        [1.0,  0.0,  0.0],
+        [2.0,  1.0,  0.0],
+        [3.0,  4.0,  1.0],
+    ])));
+    assert(u.isClose(Matrix!(3, 3).fromRows([
+        [5.0, 6.0,  7.0],
+        [0.0, 8.0,  9.0],
+        [0.0, 0.0, 10.0],
+    ])));
+
+    auto mul = Matrix!(3, 3)();
+    mul.mul(l, u);
+    assert(mul.isClose(m));
+}
+
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.matrix : isClose;
+
+    immutable m = Matrix!(4, 4).fromRows([
+        [5.0, 6.0, 7.0, 8.0],
+        [10.0, 21.0, 24.0, 27.0],
+        [15.0, 54.0, 73.0, 81.0],
+        [25.0, 84.0, 179.0, 211.0],
+    ]);
+    auto l = Matrix!(4, 4)();
+    auto u = Matrix!(4, 4)();
+    m.luDecomposition(l, u);
+    assert(l.isClose(Matrix!(4, 4).fromRows([
+        [1.0,  0.0,  0.0, 0.0],
+        [2.0,  1.0,  0.0, 0.0],
+        [3.0,  4.0,  1.0, 0.0],
+        [5.0,  6.0,  7.0, 1.0],
+    ])));
+    assert(u.isClose(Matrix!(4, 4).fromRows([
+        [5.0, 6.0,  7.0, 8.0],
+        [0.0, 9.0, 10.0, 11.0],
+        [0.0, 0.0, 12.0, 13.0],
+        [0.0, 0.0,  0.0, 14.0],
+    ])));
+
+    auto mul = Matrix!(4, 4)();
+    mul.mul(l, u);
+    assert(mul.isClose(m));
 }
 
