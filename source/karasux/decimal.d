@@ -455,7 +455,7 @@ struct Decimal
     Returns:
         normalized value.
     */
-    Decimal normalized() const @nogc nothrow pure scope
+    @property Decimal normalized() const @nogc nothrow pure scope
     {
         Decimal result = this;
         while (result.mantissa % 10 == 0 && result.exponent > 0)
