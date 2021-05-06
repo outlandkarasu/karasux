@@ -486,6 +486,9 @@ struct Decimal
     ///
     @nogc nothrow pure @safe unittest
     {
+        assert(Decimal.init.normalized.mantissa == 0);
+        assert(Decimal.init.normalized.exponent == 0);
+
         assert(Decimal(100, 0).normalized.mantissa == 100);
         assert(Decimal(100, 0).normalized.exponent == 0);
 
