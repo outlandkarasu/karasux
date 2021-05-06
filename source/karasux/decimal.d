@@ -448,6 +448,40 @@ struct Decimal
         assert(Decimal(11, 1).ceil == Decimal(2, 0));
         assert(Decimal(10001, 4).ceil == Decimal(2, 0));
     }
+
+    /**
+    Normalize mantissa and exponent.
+
+    Returns:
+        normalized value.
+    */
+    Decimal normalized() const @nogc nothrow pure scope
+    {
+        Decimal result = this;
+        while (result.mantissa % 10 == 0 && result.exponent > 0)
+        {
+            result.mantissa /= 10;
+            --result.exponent;
+        }
+
+        return result;
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(Decimal(100, 0).normalized.mantissa == 100);
+        assert(Decimal(100, 0).normalized.exponent == 0);
+
+        assert(Decimal(100, 2).normalized.mantissa == 1);
+        assert(Decimal(100, 2).normalized.exponent == 0);
+
+        assert(Decimal(120, 2).normalized.mantissa == 12);
+        assert(Decimal(120, 2).normalized.exponent == 1);
+
+        assert(Decimal(123, 2).normalized.mantissa == 123);
+        assert(Decimal(123, 2).normalized.exponent == 2);
+    }
 }
 
 /**
