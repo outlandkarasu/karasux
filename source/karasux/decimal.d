@@ -90,8 +90,7 @@ struct Decimal
             return mantissa == other.mantissa;
         }
 
-        immutable matched = matchExponent(this, other);
-        return matched[0].mantissa == matched[1].mantissa;
+        return this.normalized.mantissa == other.normalized.mantissa;
     }
 
     ///
@@ -105,6 +104,24 @@ struct Decimal
 
         assert(a != Decimal(123457, 3));
         assert(a != Decimal(1234567, 4));
+    }
+
+    /**
+    Returns:
+        value hash.
+    */
+    size_t toHash() const @nogc nothrow pure @safe
+    {
+        immutable n = normalized;
+        return (31 * n.mantissa) ^ (131 * n.exponent);
+    }
+
+    ///
+    @nogc nothrow pure unittest
+    {
+        assert(Decimal(12300, 2).toHash == Decimal(12300, 2).toHash);
+        assert(Decimal(12300, 2).toHash == Decimal(123000, 3).toHash);
+        assert(Decimal(12300, 2).toHash != Decimal(12300, 1).toHash);
     }
 
     /**
@@ -122,8 +139,7 @@ struct Decimal
             return mantissa.cmp(other.mantissa);
         }
 
-        immutable matched = matchExponent(this, other);
-        return matched[0].cmp(matched[1]);
+        return normalized.mantissa.cmp(other.normalized.mantissa);
     }
 
     ///
@@ -447,6 +463,46 @@ struct Decimal
         assert(Decimal(10, 1).ceil == Decimal(1, 0));
         assert(Decimal(11, 1).ceil == Decimal(2, 0));
         assert(Decimal(10001, 4).ceil == Decimal(2, 0));
+    }
+
+    /**
+    Normalize mantissa and exponent.
+
+    Returns:
+        normalized value.
+    */
+    @property Decimal normalized() const @nogc nothrow pure scope
+    {
+        Decimal result = this;
+        while (result.mantissa % 10 == 0 && result.exponent > 0)
+        {
+            result.mantissa /= 10;
+            --result.exponent;
+        }
+
+        return result;
+    }
+
+    ///
+    @nogc nothrow pure @safe unittest
+    {
+        assert(Decimal.init.normalized.mantissa == 0);
+        assert(Decimal.init.normalized.exponent == 0);
+
+        assert(Decimal(100, 0).normalized.mantissa == 100);
+        assert(Decimal(100, 0).normalized.exponent == 0);
+
+        assert(Decimal(100, 2).normalized.mantissa == 1);
+        assert(Decimal(100, 2).normalized.exponent == 0);
+
+        assert(Decimal(120, 2).normalized.mantissa == 12);
+        assert(Decimal(120, 2).normalized.exponent == 1);
+
+        assert(Decimal(123, 2).normalized.mantissa == 123);
+        assert(Decimal(123, 2).normalized.exponent == 2);
+
+        assert(Decimal(12340000, 2).normalized.mantissa == 123400);
+        assert(Decimal(12340000, 2).normalized.exponent == 0);
     }
 }
 
