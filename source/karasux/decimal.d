@@ -90,8 +90,7 @@ struct Decimal
             return mantissa == other.mantissa;
         }
 
-        immutable matched = matchExponent(this, other);
-        return matched[0].mantissa == matched[1].mantissa;
+        return this.normalized.mantissa == other.normalized.mantissa;
     }
 
     ///
@@ -122,8 +121,7 @@ struct Decimal
             return mantissa.cmp(other.mantissa);
         }
 
-        immutable matched = matchExponent(this, other);
-        return matched[0].cmp(matched[1]);
+        return normalized.mantissa.cmp(other.normalized.mantissa);
     }
 
     ///
