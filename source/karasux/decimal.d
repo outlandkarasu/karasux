@@ -107,6 +107,24 @@ struct Decimal
     }
 
     /**
+    Returns:
+        value hash.
+    */
+    size_t toHash() const @nogc nothrow pure @safe
+    {
+        immutable n = normalized;
+        return (31 * n.mantissa) ^ (131 * n.exponent);
+    }
+
+    ///
+    @nogc nothrow pure unittest
+    {
+        assert(Decimal(12300, 2).toHash == Decimal(12300, 2).toHash);
+        assert(Decimal(12300, 2).toHash == Decimal(123000, 3).toHash);
+        assert(Decimal(12300, 2).toHash != Decimal(12300, 1).toHash);
+    }
+
+    /**
     Compare two prices.
 
     Params:
@@ -479,6 +497,9 @@ struct Decimal
 
         assert(Decimal(123, 2).normalized.mantissa == 123);
         assert(Decimal(123, 2).normalized.exponent == 2);
+
+        assert(Decimal(12340000, 2).normalized.mantissa == 123400);
+        assert(Decimal(12340000, 2).normalized.exponent == 0);
     }
 }
 
