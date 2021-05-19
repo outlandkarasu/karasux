@@ -139,7 +139,8 @@ struct Decimal
             return mantissa.cmp(other.mantissa);
         }
 
-        return normalized.mantissa.cmp(other.normalized.mantissa);
+        immutable m = matchExponent(this, other);
+        return m[0].mantissa.cmp(m[1].mantissa);
     }
 
     ///
@@ -183,6 +184,20 @@ struct Decimal
         assert(d > a);
         assert(!(d <= a));
         assert(d >= a);
+    }
+
+    ///
+    @nogc nothrow pure unittest
+    {
+        immutable a = Decimal(1234559, 4); // 123.4559
+        immutable b = Decimal(123456, 3); // 123.456
+        assert(a < b);
+        assert(a <= b);
+        assert(!(b < a));
+
+        assert(b > a);
+        assert(b >= a);
+        assert(!(a > b));
     }
 
     /**
