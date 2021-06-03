@@ -243,26 +243,57 @@ void inverseLMatrix(size_t N, E)(
     }
 }
 
+version(unittest)
+{
+    bool isUnitMatrix(E, size_t N)(auto scope ref const(Matrix!(N, N, E)) m) @nogc nothrow pure @safe
+    {
+        import std.math : isClose;
+
+        foreach (i; 0 .. N)
+        {
+            foreach (j; 0 .. N)
+            {
+                if (!m[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-6, 1e-6))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+}
+
 @nogc nothrow pure @safe unittest
 {
-    import std.math : isClose;
+    enum N = 1;
+    alias Mat = Matrix!(N, N);
 
-    immutable m = Matrix!(4, 4).fromRows([
+    immutable m = Mat.fromRows([[5.0]]);
+    auto inverse = Mat();
+    m.inverseLMatrix(inverse);
+
+    auto result = Mat();
+    result.mul(inverse, m);
+    assert(result.isUnitMatrix);
+}
+
+@nogc nothrow pure @safe unittest
+{
+    enum N = 4;
+    alias Mat = Matrix!(N, N);
+
+    immutable m = Mat.fromRows([
         [5.0,  0, 0, 0],
         [10.0, 21.0, 0, 0],
         [15.0, 54.0, 73.0, 0],
         [25.0, 84.0, 179.0, 211.0],
     ]);
-    auto inverse = Matrix!(4, 4)();
+    auto inverse = Mat();
     m.inverseLMatrix(inverse);
 
-    auto result = Matrix!(4, 4)();
+    auto result = Mat();
     result.mul(inverse, m);
-    foreach (i; 0 .. 4)
-    {
-        foreach (j; 0 .. 4)
-        {
-            assert(result[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-6, 1e-6));
-        }
-    }
+    assert(result.isUnitMatrix);
 }
+
