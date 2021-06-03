@@ -280,6 +280,41 @@ version(unittest)
 
 @nogc nothrow pure @safe unittest
 {
+    enum N = 2;
+    alias Mat = Matrix!(N, N);
+
+    immutable m = Mat.fromRows([
+        [5.0, 0.0],
+        [6.0, 7.0],
+    ]);
+    auto inverse = Mat();
+    m.inverseLMatrix(inverse);
+
+    auto result = Mat();
+    result.mul(inverse, m);
+    assert(result.isUnitMatrix);
+}
+
+@nogc nothrow pure @safe unittest
+{
+    enum N = 3;
+    alias Mat = Matrix!(N, N);
+
+    immutable m = Mat.fromRows([
+        [5.0, 0.0,  0.0],
+        [6.0, 7.0,  0.0],
+        [8.0, 9.0, 10.0],
+    ]);
+    auto inverse = Mat();
+    m.inverseLMatrix(inverse);
+
+    auto result = Mat();
+    result.mul(inverse, m);
+    assert(result.isUnitMatrix);
+}
+
+@nogc nothrow pure @safe unittest
+{
     enum N = 4;
     alias Mat = Matrix!(N, N);
 
