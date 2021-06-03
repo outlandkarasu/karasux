@@ -6,6 +6,7 @@ module karasux.linear_algebra.lu_decomposition;
 import std.traits : isNumeric;
 
 import karasux.linear_algebra.matrix : Matrix;
+import karasux.linear_algebra.vector : Vector;
 
 /**
 LU decomposition.
@@ -162,3 +163,106 @@ void luDecomposition(size_t N, E)(
     assert(mul.isClose(m));
 }
 
+/**
+LU decomposition inversion.
+
+Params:
+    m = target matrix.
+    inverse = inverse matrix.
+*/
+void inverseByLUDecomposition(size_t N, E)(
+    auto scope ref const(Matrix!(N, N, E)) m,
+    scope ref Matrix!(N, N, E) inverse)
+    if (isNumeric!E)
+{
+}
+
+/+
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.matrix : isClose;
+
+    immutable m = Matrix!(4, 4).fromRows([
+        [5.0, 6.0, 7.0, 8.0],
+        [10.0, 21.0, 24.0, 27.0],
+        [15.0, 54.0, 73.0, 81.0],
+        [25.0, 84.0, 179.0, 211.0],
+    ]);
+    auto inverse = Matrix!(4, 4)();
+    m.inverseByLUDecomposition(inverse);
+
+    auto result = Matrix!(4, 4)();
+    result.mul(inverse, m);
+
+    debug
+    {
+        import std.stdio : writefln;
+        writefln("%s", result);
+    }
+}
++/
+
+private:
+
+/**
+Inverse lower triangle matrix.
+
+Params:
+    N = matrix dimensions.
+    E = matrix element.
+    l = lower triangle matrix.
+    inverse = inverse matrix.
+*/
+void inverseLMatrix(size_t N, E)(
+    scope ref const(Matrix!(N, N, E)) l,
+    scope ref Matrix!(N, N, E) inverse)
+    if (isNumeric!E)
+{
+    // for each inverse element.
+    foreach (i; 0 .. N)
+    {
+        foreach (j; 0 .. i)
+        {
+            auto sum = E(0);
+            foreach (k; j .. i)
+            {
+                sum += l[i, k] * inverse[k, j];
+            }
+
+            inverse[i, j] = -(sum / l[i, i]);
+        }
+
+        // diagonal element.
+        inverse[i, i] = E(1) / l[i, i];
+
+        // fill uppder triangle elements to 0.
+        foreach (j; (i + 1) .. N)
+        {
+            inverse[i, j] = E(0);
+        }
+    }
+}
+
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(4, 4).fromRows([
+        [5.0,  0, 0, 0],
+        [10.0, 21.0, 0, 0],
+        [15.0, 54.0, 73.0, 0],
+        [25.0, 84.0, 179.0, 211.0],
+    ]);
+    auto inverse = Matrix!(4, 4)();
+    m.inverseLMatrix(inverse);
+
+    auto result = Matrix!(4, 4)();
+    result.mul(inverse, m);
+    foreach (i; 0 .. 4)
+    {
+        foreach (j; 0 .. 4)
+        {
+            assert(result[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-6, 1e-6));
+        }
+    }
+}
