@@ -8,6 +8,27 @@ import std.traits : isNumeric;
 import karasux.linear_algebra.matrix : Matrix;
 import karasux.linear_algebra.vector : Vector;
 
+version(unittest)
+{
+    bool isUnitMatrix(E, size_t N)(auto scope ref const(Matrix!(N, N, E)) m) @nogc nothrow pure @safe
+    {
+        import std.math : isClose;
+
+        foreach (i; 0 .. N)
+        {
+            foreach (j; 0 .. N)
+            {
+                if (!m[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-5, 1e-5))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+}
+
 /**
 LU decomposition.
 
@@ -175,9 +196,19 @@ void inverseByLUDecomposition(size_t N, E)(
     scope ref Matrix!(N, N, E) inverse)
     if (isNumeric!E)
 {
+    Matrix!(N, N, E) l;
+    Matrix!(N, N, E) u;
+    m.luDecomposition(l, u);
+
+    Matrix!(N, N, E) inverseL;
+    l.inverseLMatrix(inverseL);
+
+    Matrix!(N, N, E) inverseU;
+    u.inverseUMatrix(inverseU);
+
+    inverse.mul(inverseU, inverseL);
 }
 
-/+
 @nogc nothrow pure @safe unittest
 {
     import karasux.linear_algebra.matrix : isClose;
@@ -193,14 +224,8 @@ void inverseByLUDecomposition(size_t N, E)(
 
     auto result = Matrix!(4, 4)();
     result.mul(inverse, m);
-
-    debug
-    {
-        import std.stdio : writefln;
-        writefln("%s", result);
-    }
+    assert(result.isUnitMatrix);
 }
-+/
 
 private:
 
@@ -240,27 +265,6 @@ void inverseLMatrix(size_t N, E)(
         {
             inverse[i, j] = E(0);
         }
-    }
-}
-
-version(unittest)
-{
-    bool isUnitMatrix(E, size_t N)(auto scope ref const(Matrix!(N, N, E)) m) @nogc nothrow pure @safe
-    {
-        import std.math : isClose;
-
-        foreach (i; 0 .. N)
-        {
-            foreach (j; 0 .. N)
-            {
-                if (!m[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-6, 1e-6))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 }
 
