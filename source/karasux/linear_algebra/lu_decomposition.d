@@ -332,3 +332,111 @@ version(unittest)
     assert(result.isUnitMatrix);
 }
 
+/**
+Inverse upper triangle matrix.
+
+Params:
+    N = matrix dimensions.
+    E = matrix element.
+    l = upper triangle matrix.
+    inverse = inverse matrix.
+*/
+void inverseUMatrix(size_t N, E)(
+    scope ref const(Matrix!(N, N, E)) u,
+    scope ref Matrix!(N, N, E) inverse)
+    if (isNumeric!E)
+{
+    // for each inverse element in reverse order.
+    foreach_reverse (i; 0 .. N)
+    {
+        // fill lower triangle elements to 0.
+        foreach (j; 0 .. i)
+        {
+            inverse[i, j] = E(0);
+        }
+
+        // diagonal element.
+        inverse[i, i] = E(1) / u[i, i];
+
+        foreach (j; (i + 1) .. N)
+        {
+            auto sum = E(0);
+            foreach_reverse (k; (i + 1) .. (j + 1))
+            {
+                sum += u[i, k] * inverse[k, j];
+            }
+
+            inverse[i, j] = -(sum / u[i, i]);
+        }
+    }
+}
+
+@nogc nothrow pure @safe unittest
+{
+    enum N = 1;
+    alias Mat = Matrix!(N, N);
+
+    immutable m = Mat.fromRows([[5.0]]);
+    auto inverse = Mat();
+    m.inverseUMatrix(inverse);
+
+    auto result = Mat();
+    result.mul(inverse, m);
+    assert(result.isUnitMatrix);
+}
+
+@nogc nothrow pure @safe unittest
+{
+    enum N = 2;
+    alias Mat = Matrix!(N, N);
+
+    immutable m = Mat.fromRows([
+        [5.0, 6.0],
+        [0.0, 7.0],
+    ]);
+    auto inverse = Mat();
+    m.inverseUMatrix(inverse);
+
+    auto result = Mat();
+    result.mul(inverse, m);
+    assert(result.isUnitMatrix);
+}
+
+@nogc nothrow pure @safe unittest
+{
+    enum N = 3;
+    alias Mat = Matrix!(N, N);
+
+    immutable m = Mat.fromRows([
+        [5.0, 4.0,  3.0],
+        [0.0, 7.0,  8.0],
+        [0.0, 0.0, 10.0],
+    ]);
+    auto inverse = Mat();
+    m.inverseUMatrix(inverse);
+
+    auto result = Mat();
+    result.mul(inverse, m);
+
+    assert(result.isUnitMatrix);
+}
+
+@nogc nothrow pure @safe unittest
+{
+    enum N = 4;
+    alias Mat = Matrix!(N, N);
+
+    immutable m = Mat.fromRows([
+        [2.0, 5.0, 4.0,  3.0],
+        [0.0, 7.0, 8.0,  1.0],
+        [0.0, 0.0, 10.0, 5.0],
+        [0.0, 0.0, 0.0,  5.0],
+    ]);
+    auto inverse = Mat();
+    m.inverseUMatrix(inverse);
+
+    auto result = Mat();
+    result.mul(inverse, m);
+    assert(result.isUnitMatrix);
+}
+
