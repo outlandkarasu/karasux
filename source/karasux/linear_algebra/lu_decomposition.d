@@ -468,6 +468,24 @@ void solveByLMatrix(size_t N, E)(
 {
     import karasux.linear_algebra.vector : isClose;
 
+    enum N = 1;
+    alias Mat = Matrix!(N, N, double);
+    alias Vec = Vector!(N, double);
+
+    immutable m = Mat.fromRows([
+        [3.0],
+    ]);
+    immutable y = Vec([12.0]);
+    Vec x;
+    m.solveByLMatrix(y, x);
+
+    assert(x.isClose(Vec([4.0])));
+}
+
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.vector : isClose;
+
     enum N = 2;
     alias Mat = Matrix!(N, N, double);
     alias Vec = Vector!(N, double);
@@ -476,10 +494,10 @@ void solveByLMatrix(size_t N, E)(
         [3.0, 0.0],
         [4.0, 5.0],
     ]);
-    immutable target = Vec([9, 3]);
-    Vec result;
-    m.solveByLMatrix(target, result);
+    immutable y = Vec([9, 3]);
+    Vec x;
+    m.solveByLMatrix(y, x);
 
-    assert(result.isClose(Vec([3.0, -9.0 / 5.0])));
+    assert(x.isClose(Vec([3.0, -9.0 / 5.0])));
 }
 
