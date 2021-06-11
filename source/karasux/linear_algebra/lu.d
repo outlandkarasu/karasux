@@ -1,7 +1,7 @@
 /**
 Matrix LU decomposition module.
 */
-module karasux.linear_algebra.lu_decomposition;
+module karasux.linear_algebra.lu;
 
 import std.traits : isNumeric;
 
