@@ -8,6 +8,111 @@ import std.traits : isNumeric;
 import karasux.linear_algebra.matrix : Matrix;
 import karasux.linear_algebra.vector : Vector;
 
+@safe:
+
+/**
+LU decomposition matrices.
+*/
+struct LUDecomposition(size_t N, E) if (isNumeric!E)
+{
+    /**
+    Matrix type.
+    */
+    alias Mat = Matrix!(N, N, E);
+
+    /**
+    Vector type.
+    */
+    alias Vec = Vector!(N, E);
+
+    @disable this();
+
+    /**
+    Initialize by matrix.
+
+    Params:
+        m = target matrix.
+    */
+    this()(auto scope ref const(Mat) m) @nogc nothrow pure scope
+    {
+        m.createLUDecomposition(this.l_, this.u_);
+    }
+
+    /**
+    Create inverse matrix.
+
+    Params:
+        dest = destination matrix.
+    Returns:
+        destination matrix reference.
+    */
+    ref Mat createInverse(return scope ref Mat dest) const @nogc nothrow pure scope
+    {
+        Mat inverseL;
+        l_.inverseLMatrix(inverseL);
+
+        Mat inverseU;
+        u_.inverseUMatrix(inverseU);
+
+        dest.mul(inverseU, inverseL);
+        return dest;
+    }
+
+    /**
+    Create inverse matrix.
+
+    Returns:
+        destination matrix reference.
+    */
+    Mat createInverse() const @nogc nothrow pure scope
+    {
+        Mat dest;
+        return createInverse(dest);
+    }
+
+private:
+    Mat l_;
+    Mat u_;
+}
+
+/**
+Construct LU decomposition matrices.
+
+Params:
+    N = dimensions.
+    E = element type.
+    m = target matrix.
+Returns:
+    LU decomposition matrices.
+*/
+auto luDecomposition(size_t N, E)(auto scope ref const(Matrix!(N, N, E)) m) @nogc nothrow pure
+    if (isNumeric!E)
+{
+    return LUDecomposition!(N, E)(m);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.matrix : isClose;
+    enum N = 4;
+
+    immutable m = Matrix!(4, 4).fromRows([
+        [5.0, 6.0, 7.0, 8.0],
+        [10.0, 21.0, 24.0, 27.0],
+        [15.0, 54.0, 73.0, 81.0],
+        [25.0, 84.0, 179.0, 211.0],
+    ]);
+    immutable lu = m.luDecomposition();
+
+    immutable inverse = lu.createInverse();
+    auto result = typeof(lu).Mat();
+    result.mul(inverse, m);
+    assert(result.isUnitMatrix);
+}
+
+private:
+
 version(unittest)
 {
     bool isUnitMatrix(E, size_t N)(auto scope ref const(Matrix!(N, N, E)) m) @nogc nothrow pure @safe
@@ -37,7 +142,7 @@ Params:
     l = L destination matrix.
     u = U destination matrix.
 */
-void luDecomposition(size_t N, E)(
+void createLUDecomposition(size_t N, E)(
     auto scope ref const(Matrix!(N, N, E)) m,
     scope ref Matrix!(N, N, E) l,
     scope ref Matrix!(N, N, E) u)
@@ -109,7 +214,7 @@ void luDecomposition(size_t N, E)(
         [6.0f, 3.0f]]);
     auto l = Matrix!(2, 2)();
     auto u = Matrix!(2, 2)();
-    m.luDecomposition(l, u);
+    m.createLUDecomposition(l, u);
 
     assert(l.isClose(Matrix!(2, 2).fromRows([
         [1.0, 0.0],
@@ -136,7 +241,7 @@ void luDecomposition(size_t N, E)(
     ]);
     auto l = Matrix!(3, 3)();
     auto u = Matrix!(3, 3)();
-    m.luDecomposition(l, u);
+    m.createLUDecomposition(l, u);
     assert(l.isClose(Matrix!(3, 3).fromRows([
         [1.0,  0.0,  0.0],
         [2.0,  1.0,  0.0],
@@ -165,7 +270,7 @@ void luDecomposition(size_t N, E)(
     ]);
     auto l = Matrix!(4, 4)();
     auto u = Matrix!(4, 4)();
-    m.luDecomposition(l, u);
+    m.createLUDecomposition(l, u);
     assert(l.isClose(Matrix!(4, 4).fromRows([
         [1.0,  0.0,  0.0, 0.0],
         [2.0,  1.0,  0.0, 0.0],
@@ -183,51 +288,6 @@ void luDecomposition(size_t N, E)(
     mul.mul(l, u);
     assert(mul.isClose(m));
 }
-
-/**
-LU decomposition inversion.
-
-Params:
-    m = target matrix.
-    inverse = inverse matrix.
-*/
-void inverseByLUDecomposition(size_t N, E)(
-    auto scope ref const(Matrix!(N, N, E)) m,
-    scope ref Matrix!(N, N, E) inverse)
-    if (isNumeric!E)
-{
-    Matrix!(N, N, E) l;
-    Matrix!(N, N, E) u;
-    m.luDecomposition(l, u);
-
-    Matrix!(N, N, E) inverseL;
-    l.inverseLMatrix(inverseL);
-
-    Matrix!(N, N, E) inverseU;
-    u.inverseUMatrix(inverseU);
-
-    inverse.mul(inverseU, inverseL);
-}
-
-@nogc nothrow pure @safe unittest
-{
-    import karasux.linear_algebra.matrix : isClose;
-
-    immutable m = Matrix!(4, 4).fromRows([
-        [5.0, 6.0, 7.0, 8.0],
-        [10.0, 21.0, 24.0, 27.0],
-        [15.0, 54.0, 73.0, 81.0],
-        [25.0, 84.0, 179.0, 211.0],
-    ]);
-    auto inverse = Matrix!(4, 4)();
-    m.inverseByLUDecomposition(inverse);
-
-    auto result = Matrix!(4, 4)();
-    result.mul(inverse, m);
-    assert(result.isUnitMatrix);
-}
-
-private:
 
 /**
 Inverse lower triangle matrix.
