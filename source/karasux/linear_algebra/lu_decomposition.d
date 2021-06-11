@@ -501,3 +501,42 @@ void solveByLMatrix(size_t N, E)(
     assert(x.isClose(Vec([3.0, -9.0 / 5.0])));
 }
 
+/**
+Solve equation by U matrix.
+*/
+void solveByUMatrix(size_t N, E)(
+    auto scope ref const(Matrix!(N, N, E)) l,
+    auto scope ref const(Vector!(N, E)) y,
+    ref Vector!(N, E) x)
+{
+    foreach_reverse (i; 0 .. N)
+    {
+        E sum = E(0);
+        foreach_reverse (j; (i + 1) .. N)
+        {
+            sum += l[i, j] * x[j];
+        }
+
+        x[i] = (y[i] - sum) / l[i, i];
+    }
+}
+
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.vector : isClose;
+
+    enum N = 2;
+    alias Mat = Matrix!(N, N, double);
+    alias Vec = Vector!(N, double);
+
+    immutable m = Mat.fromRows([
+        [3.0, 4.0],
+        [0.0, 5.0],
+    ]);
+    immutable y = Vec([9, 3]);
+    Vec x;
+    m.solveByUMatrix(y, x);
+
+    assert(x.isClose(Vec([2.2, 0.6])));
+}
+
