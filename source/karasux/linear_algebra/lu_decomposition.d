@@ -444,3 +444,42 @@ void inverseUMatrix(size_t N, E)(
     assert(result.isUnitMatrix);
 }
 
+/**
+Solve equation by L matrix.
+*/
+void solveByLMatrix(size_t N, E)(
+    auto scope ref const(Matrix!(N, N, E)) l,
+    auto scope ref const(Vector!(N, E)) y,
+    ref Vector!(N, E) x)
+{
+    foreach (i; 0 .. N)
+    {
+        E sum = E(0);
+        foreach (j; 0 .. i)
+        {
+            sum += l[i, j] * x[j];
+        }
+
+        x[i] = (y[i] - sum) / l[i, i];
+    }
+}
+
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.vector : isClose;
+
+    enum N = 2;
+    alias Mat = Matrix!(N, N, double);
+    alias Vec = Vector!(N, double);
+
+    immutable m = Mat.fromRows([
+        [3.0, 0.0],
+        [4.0, 5.0],
+    ]);
+    immutable target = Vec([9, 3]);
+    Vec result;
+    m.solveByLMatrix(target, result);
+
+    assert(result.isClose(Vec([3.0, -9.0 / 5.0])));
+}
+
