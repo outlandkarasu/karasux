@@ -70,6 +70,37 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
         return createInverse(dest);
     }
 
+    /**
+    Solve equation.
+
+    Params:
+        y = equation Y.
+        x = solved X.
+    Returns:
+        reference to X.
+    */
+    ref Vec solve()(auto scope ref const(Vec) y, return scope ref Vec x) const @nogc nothrow pure scope
+    {
+        Vec a;
+        l_.solveByLMatrix(y, a);
+        u_.solveByUMatrix(a, x);
+        return x;
+    }
+
+    /**
+    Solve equation.
+
+    Params:
+        y = equation Y.
+    Returns:
+        solved X.
+    */
+    Vec solve()(auto scope ref const(Vec) y) const @nogc nothrow pure scope
+    {
+        Vec x;
+        return solve(y, x);
+    }
+
 private:
     Mat l_;
     Mat u_;
@@ -97,7 +128,7 @@ auto luDecomposition(size_t N, E)(auto scope ref const(Matrix!(N, N, E)) m) @nog
     import karasux.linear_algebra.matrix : isClose;
     enum N = 4;
 
-    immutable m = Matrix!(4, 4).fromRows([
+    immutable m = Matrix!(N, N).fromRows([
         [5.0, 6.0, 7.0, 8.0],
         [10.0, 21.0, 24.0, 27.0],
         [15.0, 54.0, 73.0, 81.0],
@@ -109,6 +140,28 @@ auto luDecomposition(size_t N, E)(auto scope ref const(Matrix!(N, N, E)) m) @nog
     auto result = typeof(lu).Mat();
     result.mul(inverse, m);
     assert(result.isUnitMatrix);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.linear_algebra.vector : isClose;
+    enum N = 4;
+
+    immutable m = Matrix!(N, N).fromRows([
+        [5.0, 6.0, 7.0, 8.0],
+        [10.0, 21.0, 24.0, 27.0],
+        [15.0, 54.0, 73.0, 81.0],
+        [25.0, 84.0, 179.0, 211.0],
+    ]);
+    immutable lu = m.luDecomposition();
+
+    immutable y = typeof(lu).Vec([3.0, 5.0, 4.0, -5.0]);
+    immutable x = lu.solve(y);
+
+    typeof(lu).Vec result;
+    result.mul(m, x);
+    assert(result.isClose(y));
 }
 
 private:
