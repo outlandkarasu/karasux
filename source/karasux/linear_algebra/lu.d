@@ -3,6 +3,7 @@ Matrix LU decomposition module.
 */
 module karasux.linear_algebra.lu;
 
+import std.algorithm : swap;
 import std.traits : isNumeric;
 
 import karasux.linear_algebra.matrix : Matrix;
@@ -35,7 +36,18 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
     */
     this()(auto scope ref const(Mat) m) @nogc nothrow pure scope
     {
-        m.createLUDecomposition(this.l_, this.u_);
+        m.createPivots(this.pivot_);
+
+        Mat swapped;
+        foreach (i, pos; pivot_)
+        {
+            foreach (j; 0 .. N)
+            {
+                swapped[pos, j] = m[i, j];
+            }
+        }
+
+        swapped.createLUDecomposition(this.l_, this.u_);
     }
 
     /**
@@ -54,7 +66,17 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
         Mat inverseU;
         u_.inverseUMatrix(inverseU);
 
-        dest.mul(inverseU, inverseL);
+        Mat inverseLUP;
+        inverseLUP.mul(inverseU, inverseL);
+
+        foreach (i; 0 .. N)
+        {
+            foreach (j; 0 .. N)
+            {
+                dest[i, j] = inverseLUP[i, pivot_[j]];
+            }
+        }
+
         return dest;
     }
 
@@ -81,8 +103,14 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
     */
     ref Vec solve()(auto scope ref const(Vec) y, return scope ref Vec x) const @nogc nothrow pure scope
     {
+        Vec swapped;
+        foreach (i, pos; pivot_)
+        {
+            swapped[i] = y[pos];
+        }
+
         Vec a;
-        l_.solveByLMatrix(y, a);
+        l_.solveByLMatrix(swapped, a);
         u_.solveByUMatrix(a, x);
         return x;
     }
@@ -104,6 +132,7 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
 private:
     Mat l_;
     Mat u_;
+    size_t[N] pivot_;
 }
 
 /**
@@ -176,7 +205,7 @@ version(unittest)
         {
             foreach (j; 0 .. N)
             {
-                if (!m[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-5, 1e-5))
+                if (!m[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-4, 1e-4))
                 {
                     return false;
                 }
@@ -185,6 +214,80 @@ version(unittest)
 
         return true;
     }
+}
+
+/**
+Create matrix pivots.
+
+Params:
+    m = target matrix.
+    pivots = pivots indicies.
+*/
+void createPivots(size_t N, E)(
+    auto scope ref const(Matrix!(N, N, E)) m,
+    scope ref size_t[N] pivots)
+    if (isNumeric!E)
+{
+    foreach (i, ref e; pivots)
+    {
+        e = i;
+    }
+
+    foreach (i; 0 .. N)
+    {
+        size_t maxPos = i;
+        E maxValue = m[maxPos, i];
+        foreach (j; (i + 1) .. N)
+        {
+            immutable value = m[pivots[j], i];
+            if (maxValue < value)
+            {
+                maxPos = j;
+                maxValue = value;
+            }
+        }
+
+        swap(pivots[i], pivots[maxPos]);
+    }
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    enum N = 2;
+    alias Mat = Matrix!(N, N);
+
+    size_t[N] pivots;
+    auto m = Mat.fromRows([
+        [1.0f, 2.0f],
+        [2.0f, 1.0f]]);
+
+    m.createPivots(pivots);
+    assert(pivots == [1, 0]);
+
+    m = Mat.fromRows([
+        [1.0f, 1.0f],
+        [2.0f, 3.0f]]);
+
+    m.createPivots(pivots);
+    assert(pivots == [1, 0]);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    enum N = 3;
+    alias Mat = Matrix!(N, N);
+
+    size_t[N] pivots;
+    auto m = Mat.fromRows([
+        [1.0f, 2.0f, 3.0f],
+        [2.0f, 1.0f, 4.0f],
+        [3.0f, 4.0f, 0.0f],
+    ]);
+
+    m.createPivots(pivots);
+    assert(pivots == [2, 0, 1]);
 }
 
 /**

@@ -3,6 +3,7 @@ Matrix module.
 */
 module karasux.linear_algebra.matrix;
 
+import std.algorithm : swap;
 import std.math : cos, sin;
 import std.traits : isNumeric;
 
@@ -294,6 +295,28 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     out (r; r != null)
     {
         return &elements_[0][0];
+    }
+
+    /**
+    Swap 2 rows.
+
+    Params:
+        row1 = swap target row 1.
+        row2 = swap target row 2.
+    */
+    void swapRows(size_t row1, size_t row2) scope
+        in (row1 < ROWS)
+        in (row2 < ROWS)
+    {
+        if (row1 == row2)
+        {
+            return;
+        }
+
+        foreach (column; 0 .. COLS)
+        {
+            swap(elements_[column][row1], elements_[column][row2]);
+        }
     }
 
 private:
@@ -593,5 +616,29 @@ bool isClose(size_t R, size_t C, E)(
     b[0, 0] = 100.0;
     assert(!a.isClose(b));
     assert(!b.isClose(a));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    auto a = Matrix!(4, 4).fromRows([
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+        [9, 10, 11, 12],
+        [13, 14, 15, 16],
+    ]);
+
+    immutable expected = Matrix!(4, 4).fromRows([
+        [9, 10, 11, 12],
+        [5, 6, 7, 8],
+        [1, 2, 3, 4],
+        [13, 14, 15, 16],
+    ]);
+
+    a.swapRows(0, 2);
+    assert(a.isClose(expected));
+
+    a.swapRows(3, 3);
+    assert(a.isClose(expected));
 }
 
