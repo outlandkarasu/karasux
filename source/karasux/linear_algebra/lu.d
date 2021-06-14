@@ -36,7 +36,18 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
     */
     this()(auto scope ref const(Mat) m) @nogc nothrow pure scope
     {
-        m.createLUDecomposition(this.l_, this.u_);
+        m.createPivots(this.pivot_);
+
+        Mat swapped;
+        foreach (i, pos; pivot_)
+        {
+            foreach (j; 0 .. N)
+            {
+                swapped[pos, j] = m[i, j];
+            }
+        }
+
+        swapped.createLUDecomposition(this.l_, this.u_);
     }
 
     /**
@@ -55,7 +66,6 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
         Mat inverseU;
         u_.inverseUMatrix(inverseU);
 
-        /+
         Mat inverseLUP;
         inverseLUP.mul(inverseU, inverseL);
 
@@ -63,13 +73,10 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
         {
             foreach (j; 0 .. N)
             {
-                immutable p = pivot_[j];
-                dest[i, p] = inverseLUP[i, p];
+                dest[i, j] = inverseLUP[i, pivot_[j]];
             }
         }
-        +/
 
-        dest.mul(inverseU, inverseL);
         return dest;
     }
 
@@ -96,8 +103,14 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
     */
     ref Vec solve()(auto scope ref const(Vec) y, return scope ref Vec x) const @nogc nothrow pure scope
     {
+        Vec swapped;
+        foreach (i, pos; pivot_)
+        {
+            swapped[i] = y[pos];
+        }
+
         Vec a;
-        l_.solveByLMatrix(y, a);
+        l_.solveByLMatrix(swapped, a);
         u_.solveByUMatrix(a, x);
         return x;
     }
@@ -192,7 +205,7 @@ version(unittest)
         {
             foreach (j; 0 .. N)
             {
-                if (!m[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-5, 1e-5))
+                if (!m[i, j].isClose((i == j) ? 1.0 : 0.0, 1e-4, 1e-4))
                 {
                     return false;
                 }
