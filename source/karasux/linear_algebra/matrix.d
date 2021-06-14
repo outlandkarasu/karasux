@@ -308,6 +308,11 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
         in (row1 < ROWS)
         in (row2 < ROWS)
     {
+        if (row1 == row2)
+        {
+            return;
+        }
+
         foreach (column; 0 .. COLS)
         {
             swap(elements_[column][row1], elements_[column][row2]);
@@ -631,6 +636,9 @@ bool isClose(size_t R, size_t C, E)(
     ]);
 
     a.swapRows(0, 2);
+    assert(a.isClose(expected));
+
+    a.swapRows(3, 3);
     assert(a.isClose(expected));
 }
 

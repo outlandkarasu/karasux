@@ -3,6 +3,7 @@ Matrix LU decomposition module.
 */
 module karasux.linear_algebra.lu;
 
+import std.algorithm : swap;
 import std.traits : isNumeric;
 
 import karasux.linear_algebra.matrix : Matrix;
@@ -54,6 +55,20 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
         Mat inverseU;
         u_.inverseUMatrix(inverseU);
 
+        /+
+        Mat inverseLUP;
+        inverseLUP.mul(inverseU, inverseL);
+
+        foreach (i; 0 .. N)
+        {
+            foreach (j; 0 .. N)
+            {
+                immutable p = pivot_[j];
+                dest[i, p] = inverseLUP[i, p];
+            }
+        }
+        +/
+
         dest.mul(inverseU, inverseL);
         return dest;
     }
@@ -104,6 +119,7 @@ struct LUDecomposition(size_t N, E) if (isNumeric!E)
 private:
     Mat l_;
     Mat u_;
+    size_t[N] pivot_;
 }
 
 /**
@@ -185,6 +201,80 @@ version(unittest)
 
         return true;
     }
+}
+
+/**
+Create matrix pivots.
+
+Params:
+    m = target matrix.
+    pivots = pivots indicies.
+*/
+void createPivots(size_t N, E)(
+    auto scope ref const(Matrix!(N, N, E)) m,
+    scope ref size_t[N] pivots)
+    if (isNumeric!E)
+{
+    foreach (i, ref e; pivots)
+    {
+        e = i;
+    }
+
+    foreach (i; 0 .. N)
+    {
+        size_t maxPos = i;
+        E maxValue = m[maxPos, i];
+        foreach (j; (i + 1) .. N)
+        {
+            immutable value = m[pivots[j], i];
+            if (maxValue < value)
+            {
+                maxPos = j;
+                maxValue = value;
+            }
+        }
+
+        swap(pivots[i], pivots[maxPos]);
+    }
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    enum N = 2;
+    alias Mat = Matrix!(N, N);
+
+    size_t[N] pivots;
+    auto m = Mat.fromRows([
+        [1.0f, 2.0f],
+        [2.0f, 1.0f]]);
+
+    m.createPivots(pivots);
+    assert(pivots == [1, 0]);
+
+    m = Mat.fromRows([
+        [1.0f, 1.0f],
+        [2.0f, 3.0f]]);
+
+    m.createPivots(pivots);
+    assert(pivots == [1, 0]);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    enum N = 3;
+    alias Mat = Matrix!(N, N);
+
+    size_t[N] pivots;
+    auto m = Mat.fromRows([
+        [1.0f, 2.0f, 3.0f],
+        [2.0f, 1.0f, 4.0f],
+        [3.0f, 4.0f, 0.0f],
+    ]);
+
+    m.createPivots(pivots);
+    assert(pivots == [2, 0, 1]);
 }
 
 /**
