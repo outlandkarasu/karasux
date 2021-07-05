@@ -133,6 +133,28 @@ struct Timestamp
     }
 
     /**
+    add or subtract duration.
+    */
+    void opOpAssign(string op)(scope auto ref const(Duration) rhs)
+        @nogc nothrow @safe scope if (op == "-" || op == "+")
+    {
+        mixin("stdTime " ~ op ~ `= rhs.total!"hnsecs";`);
+    }
+
+    ///
+    @nogc nothrow @safe unittest
+    {
+        import core.time : dur;
+        auto t = Timestamp(1000);
+        t += dur!"seconds"(1);
+        assert(t == Timestamp(1000 + dur!"seconds"(1).total!"hnsecs"));
+
+        t = Timestamp(1000);
+        t -= dur!"hnsecs"(100);
+        assert(t == Timestamp(900));
+    }
+
+    /**
     Round down time by unit duration.
 
     Params:
