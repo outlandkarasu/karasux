@@ -14,7 +14,7 @@ Params:
 Returns:
     always true.
 */
-bool parseAlwaysTrue(R)(auto scope ref R r)
+bool alwaysTrue(R)(auto scope ref R r)
     if (isInputRange!(Unqual!R))
 {
     return true;
@@ -23,11 +23,11 @@ bool parseAlwaysTrue(R)(auto scope ref R r)
 ///
 @nogc nothrow pure @safe unittest
 {
-    assert("".parseAlwaysTrue);
-    assert("aaa".parseAlwaysTrue);
+    assert("".alwaysTrue);
+    assert("aaa".alwaysTrue);
 
     auto source = "aaa";
-    assert(source.parseAlwaysTrue);
+    assert(source.alwaysTrue);
     assert(source == "aaa");
 }
 
