@@ -3,7 +3,7 @@ Core parsers module.s
 */
 module karasux.parser.core;
 
-import std.range : isInputRange;
+import std.range : empty, isInputRange;
 import std.traits : Unqual;
 
 /**
@@ -53,6 +53,31 @@ bool alwaysFalse(R)(auto scope ref R r)
 
     auto source = "aaa";
     assert(!source.alwaysFalse);
+    assert(source == "aaa");
+}
+
+/**
+End of source parser.
+
+Params:
+    r = input range.
+Returns:
+    true if range is empty.
+*/
+bool endOfSource(R)(auto scope ref R r)
+    if (isInputRange!(Unqual!R))
+{
+    return r.empty;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    assert("".endOfSource);
+    assert(!"aaa".endOfSource);
+
+    auto source = "aaa";
+    assert(!source.endOfSource);
     assert(source == "aaa");
 }
 
