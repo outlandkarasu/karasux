@@ -4,7 +4,9 @@ Core parsers module.s
 module karasux.parser.core;
 
 import std.range :
+    ElementType,
     empty,
+    front,
     popFront,
     isInputRange;
 import std.traits : Unqual;
@@ -112,6 +114,41 @@ bool any(R)(auto scope ref R r)
 
     auto source = "abc";
     assert(source.any);
+    assert(source == "bc");
+}
+
+/**
+Single symbol parser.
+
+Params:
+    r = source range.
+    c = an expected symbol.
+Returns:
+    true if r front is c.
+*/
+bool symbol(R, C)(auto scope ref R r, C c)
+    if (isInputRange!(Unqual!R))
+{
+    if (r.empty || r.front != c)
+    {
+        return false;
+    }
+
+    r.popFront();
+    return true;
+}
+
+///
+pure @safe unittest
+{
+    assert("a".symbol('a'));
+    assert(!"b".symbol('a'));
+    assert(!"".symbol('a'));
+
+    auto source = "abc";
+    assert(source.symbol('a'));
+    assert(source == "bc");
+    assert(!source.symbol('a'));
     assert(source == "bc");
 }
 
