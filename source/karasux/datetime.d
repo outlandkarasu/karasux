@@ -16,12 +16,6 @@ UNIX epoch time.
 */
 immutable UNIX_EPOCH = SysTime(unixTimeToStdTime(0), timeZoneUTC);
 
-unittest
-{
-    import std.stdio : writefln;
-    writefln("%s", UNIX_EPOCH.stdTime);
-}
-
 /**
 Calculate duration since UNIX epoch time.
 
