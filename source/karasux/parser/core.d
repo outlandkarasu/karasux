@@ -161,23 +161,19 @@ Params:
     r = source range.
     s = expected symbols.
 Returns:
-    true if r front is c.
+    true if r starts s.
 */
 bool symbols(R, S)(auto scope ref R r, S s)
     if (isForwardRange!(Unqual!R) && isInputRange!(Unqual!S))
 {
     auto before = r.save;
-    auto expected = s;
-    while(!expected.empty)
+    for(auto expected = s; !expected.empty; expected.popFront(), r.popFront())
     {
         if (r.empty || r.front != expected.front)
         {
             r = before;
             return false;
         }
-
-        r.popFront();
-        expected.popFront();
     }
 
     return true;
@@ -200,6 +196,55 @@ pure unittest
 
     source = "abc";
     assert(!source.symbols("abcd"));
+    assert(source == "abc");
+}
+
+/**
+Symbol set parser.
+
+Params:
+    r = source range.
+    s = expected symbol set.
+Returns:
+    true if r front is in s.
+*/
+bool symbolSet(R, S)(auto scope ref R r, S s)
+    if (isInputRange!(Unqual!R) && isInputRange!(Unqual!S))
+{
+    if (r.empty)
+    {
+        return false;
+    }
+
+    for(auto expected = s; !expected.empty; expected.popFront())
+    {
+        if (r.front == expected.front)
+        {
+            r.popFront();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+///
+pure @safe unittest
+{
+    auto source = "abc";
+    assert(source.symbolSet("abc"));
+    assert(source == "bc");
+
+    source = "abc";
+    assert(!source.symbolSet("123"));
+    assert(source == "abc");
+
+    source = "";
+    assert(!source.symbolSet(""));
+    assert(source == "");
+
+    source = "abc";
+    assert(!source.symbolSet(""));
     assert(source == "abc");
 }
 
