@@ -8,7 +8,9 @@ import std.range :
     empty,
     front,
     popFront,
-    isInputRange;
+    isForwardRange,
+    isInputRange,
+    save;
 import std.traits : Unqual;
 
 /**
@@ -150,5 +152,54 @@ pure @safe unittest
     assert(source == "bc");
     assert(!source.symbol('a'));
     assert(source == "bc");
+}
+
+/**
+Symbols parser.
+
+Params:
+    r = source range.
+    s = expected symbols.
+Returns:
+    true if r front is c.
+*/
+bool symbols(R, S)(auto scope ref R r, S s)
+    if (isForwardRange!(Unqual!R) && isInputRange!(Unqual!S))
+{
+    auto before = r.save;
+    auto expected = s;
+    while(!expected.empty)
+    {
+        if (r.empty || r.front != expected.front)
+        {
+            r = before;
+            return false;
+        }
+
+        r.popFront();
+        expected.popFront();
+    }
+
+    return true;
+}
+
+///
+pure unittest
+{
+    auto source = "a";
+    assert(source.symbols("a"));
+    assert(source.length == 0);
+
+    source = "abc";
+    assert(source.symbols("ab"));
+    assert(source == "c");
+
+    source = "abc";
+    assert(!source.symbols("abd"));
+    assert(source == "abc");
+
+    source = "abc";
+    assert(!source.symbols("abcd"));
+    assert(source == "abc");
 }
 
