@@ -13,6 +13,8 @@ import std.range :
     save;
 import std.traits : Unqual;
 
+import karasux.parser.core.traits : isInputSource;
+
 /**
 Always true parser.
 
@@ -22,7 +24,7 @@ Returns:
     always true.
 */
 bool alwaysTrue(R)(auto scope ref R r)
-    if (isInputRange!(Unqual!R))
+    if (isInputSource!R)
 {
     return true;
 }
@@ -47,7 +49,7 @@ Returns:
     always false.
 */
 bool alwaysFalse(R)(auto scope ref R r)
-    if (isInputRange!(Unqual!R))
+    if (isInputSource!R)
 {
     return false;
 }
@@ -72,7 +74,7 @@ Returns:
     true if range is empty.
 */
 bool endOfSource(R)(auto scope ref R r)
-    if (isInputRange!(Unqual!R))
+    if (isInputSource!R)
 {
     return r.empty;
 }
@@ -97,7 +99,7 @@ Returns:
     true if range is not empty.
 */
 bool any(R)(auto scope ref R r)
-    if (isInputRange!(Unqual!R))
+    if (isInputSource!R)
 {
     if (r.empty)
     {
@@ -129,7 +131,7 @@ Returns:
     true if r front is c.
 */
 bool symbol(R, C)(auto scope ref R r, C c)
-    if (isInputRange!(Unqual!R))
+    if (isInputSource!R)
 {
     if (r.empty || r.front != c)
     {
@@ -164,7 +166,7 @@ Returns:
     true if r starts s.
 */
 bool symbols(R, S)(auto scope ref R r, S s)
-    if (isForwardRange!(Unqual!R) && isInputRange!(Unqual!S))
+    if (isForwardRange!(Unqual!R) && isInputSource!S)
 {
     auto before = r.save;
     for(auto expected = s; !expected.empty; expected.popFront(), r.popFront())
@@ -209,7 +211,7 @@ Returns:
     true if r front is in s.
 */
 bool symbolSet(R, S)(auto scope ref R r, S s)
-    if (isInputRange!(Unqual!R) && isInputRange!(Unqual!S))
+    if (isInputRange!(Unqual!R) && isInputSource!S)
 {
     if (r.empty)
     {
