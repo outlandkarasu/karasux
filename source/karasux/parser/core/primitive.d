@@ -1,7 +1,7 @@
 /**
-Core parsers module.s
+Primitive parsers module.
 */
-module karasux.parser.core;
+module karasux.parser.core.primitive;
 
 import std.range :
     ElementType,
