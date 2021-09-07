@@ -8,12 +8,11 @@ import std.range :
     empty,
     front,
     popFront,
-    isForwardRange,
-    isInputRange,
     save;
-import std.traits : Unqual;
 
-import karasux.parser.core.traits : isInputSource;
+import karasux.parser.core.traits :
+    isInputSource,
+    isForwardRangeSource;
 
 /**
 Always true parser.
@@ -166,7 +165,7 @@ Returns:
     true if r starts s.
 */
 bool symbols(R, S)(auto scope ref R r, S s)
-    if (isForwardRange!(Unqual!R) && isInputSource!S)
+    if (isForwardRangeSource!R && isInputSource!S)
 {
     auto before = r.save;
     for(auto expected = s; !expected.empty; expected.popFront(), r.popFront())
@@ -211,7 +210,7 @@ Returns:
     true if r front is in s.
 */
 bool symbolSet(R, S)(auto scope ref R r, S s)
-    if (isInputRange!(Unqual!R) && isInputSource!S)
+    if (isInputSource!R && isInputSource!S)
 {
     if (r.empty)
     {

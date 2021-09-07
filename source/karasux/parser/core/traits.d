@@ -19,5 +19,21 @@ enum isInputSource(R) = isInputRange!(Unqual!R);
 {
     static assert(isInputSource!string);
     static assert(isInputSource!(ubyte[]));
+    static assert(!isInputSource!void);
+    static assert(!isInputSource!char);
+}
+
+/**
+Forward range source traits.
+*/
+enum isForwardRangeSource(R) = isInputSource!R && isForwardRange!(Unqual!R);
+
+///
+@nogc nothrow pure @safe unittest
+{
+    static assert(isForwardRangeSource!string);
+    static assert(isForwardRangeSource!(ubyte[]));
+    static assert(!isForwardRangeSource!void);
+    static assert(!isForwardRangeSource!char);
 }
 
