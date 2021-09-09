@@ -3,6 +3,8 @@ Parser source module.
 */
 module karasux.parser.core.source;
 
+import std.array : Appender;
+
 /**
 Backtrackable array source.
 
@@ -55,9 +57,43 @@ struct ArraySource(S)
         ++position_;
     }
 
+    /**
+    begin backtrackable point.
+    */
+    void begin()
+    {
+        savePoints_ ~= position_;
+    }
+
+    /**
+    accept current backtrackable point.
+    */
+    void accept()
+        in (savePoints_[].length > 0)
+    {
+        popSavePoint();
+    }
+
+    /**
+    reject current backtrackable point and restore state.
+    */
+    void reject()
+        in (savePoints_[].length > 0)
+    {
+        position_ = savePoints_[][$ - 1];
+        popSavePoint();
+    }
+
 private:
     S[] source_;
     size_t position_;
+    Appender!(size_t[]) savePoints_;
+
+    void popSavePoint() pure @safe
+        in (savePoints_[].length > 0)
+    {
+        savePoints_.shrinkTo(savePoints_[].length - 1);
+    }
 }
 
 ///
@@ -86,3 +122,35 @@ private:
     source.popFront();
     assert(source.empty);
 }
+
+///
+pure @safe unittest
+{
+    import karasux.parser.core.traits : isBacktrackableSource;
+
+    scope source = ArraySource!(immutable(char))("test");
+    static assert(isBacktrackableSource!(typeof(source)));
+
+    source.popFront();
+    source.begin();
+    assert(source.front == 'e');
+
+    source.popFront();
+    assert(source.front == 's');
+
+    source.begin();
+    source.popFront();
+    assert(source.front == 't');
+
+    source.reject();
+    assert(source.front == 's');
+
+    source.begin();
+    source.popFront();
+    assert(source.front == 't');
+    source.accept();
+
+    source.reject();
+    assert(source.front == 'e');
+}
+
