@@ -84,6 +84,15 @@ struct ArraySource(S)
         popSavePoint();
     }
 
+    /**
+    Returns:
+        current position.
+    */
+    size_t position() const @nogc nothrow pure @safe scope
+    {
+        return position_;
+    }
+
 private:
     S[] source_;
     size_t position_;
@@ -105,21 +114,26 @@ private:
     static assert(isInputSource!(typeof(source)));
 
     assert(!source.empty);
+    assert(source.position == 0);
     assert(source.front == 't');
 
     source.popFront();
     assert(!source.empty);
+    assert(source.position == 1);
     assert(source.front == 'e');
 
     source.popFront();
     assert(!source.empty);
+    assert(source.position == 2);
     assert(source.front == 's');
 
     source.popFront();
     assert(!source.empty);
+    assert(source.position == 3);
     assert(source.front == 't');
 
     source.popFront();
+    assert(source.position == 4);
     assert(source.empty);
 }
 
@@ -133,24 +147,30 @@ pure @safe unittest
 
     source.popFront();
     source.begin();
+    assert(source.position == 1);
     assert(source.front == 'e');
 
     source.popFront();
+    assert(source.position == 2);
     assert(source.front == 's');
 
     source.begin();
     source.popFront();
+    assert(source.position == 3);
     assert(source.front == 't');
 
     source.reject();
+    assert(source.position == 2);
     assert(source.front == 's');
 
     source.begin();
     source.popFront();
+    assert(source.position == 3);
     assert(source.front == 't');
     source.accept();
 
     source.reject();
+    assert(source.position == 1);
     assert(source.front == 'e');
 }
 
