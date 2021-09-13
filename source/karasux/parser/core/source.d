@@ -174,3 +174,101 @@ pure @safe unittest
     assert(source.front == 'e');
 }
 
+/**
+Memoized array source.
+
+Params:
+    S = symbol type.
+*/
+struct MemoizedArraySource(S)
+{
+    /**
+    copy constructor disabled.
+    */
+    @disable this(ref return scope MemoizedArraySource rhs);
+
+    /**
+    Initialize by source array.
+
+    Params:
+        source = source array.
+    */
+    this(S[] source)
+    {
+        this.innerSource = ArraySource!S(source);
+    }
+
+    alias innerSource this;
+
+    ArraySource!S innerSource;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.core.traits : isInputSource;
+
+    scope source = MemoizedArraySource!(immutable(char))("test");
+    static assert(isInputSource!(typeof(source)));
+
+    assert(!source.empty);
+    assert(source.position == 0);
+    assert(source.front == 't');
+
+    source.popFront();
+    assert(!source.empty);
+    assert(source.position == 1);
+    assert(source.front == 'e');
+
+    source.popFront();
+    assert(!source.empty);
+    assert(source.position == 2);
+    assert(source.front == 's');
+
+    source.popFront();
+    assert(!source.empty);
+    assert(source.position == 3);
+    assert(source.front == 't');
+
+    source.popFront();
+    assert(source.position == 4);
+    assert(source.empty);
+}
+
+///
+pure @safe unittest
+{
+    import karasux.parser.core.traits : isBacktrackableSource;
+
+    scope source = MemoizedArraySource!(immutable(char))("test");
+    static assert(isBacktrackableSource!(typeof(source)));
+
+    source.popFront();
+    source.begin();
+    assert(source.position == 1);
+    assert(source.front == 'e');
+
+    source.popFront();
+    assert(source.position == 2);
+    assert(source.front == 's');
+
+    source.begin();
+    source.popFront();
+    assert(source.position == 3);
+    assert(source.front == 't');
+
+    source.reject();
+    assert(source.position == 2);
+    assert(source.front == 's');
+
+    source.begin();
+    source.popFront();
+    assert(source.position == 3);
+    assert(source.front == 't');
+    source.accept();
+
+    source.reject();
+    assert(source.position == 1);
+    assert(source.front == 'e');
+}
+
