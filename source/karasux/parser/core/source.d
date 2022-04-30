@@ -4,6 +4,7 @@ Parser source module.
 module karasux.parser.core.source;
 
 import std.array : Appender;
+import std.typecons : Nullable, nullable;
 
 /**
 Backtrackable array source.
@@ -71,7 +72,7 @@ struct ArraySource(S)
     void accept()
         in (savePoints_[].length > 0)
     {
-        popSavePoint();
+        savePoints_.popAppender();
     }
 
     /**
@@ -81,7 +82,7 @@ struct ArraySource(S)
         in (savePoints_[].length > 0)
     {
         position_ = savePoints_[][$ - 1];
-        popSavePoint();
+        savePoints_.popAppender();
     }
 
     /**
@@ -97,12 +98,6 @@ private:
     S[] source_;
     size_t position_;
     Appender!(size_t[]) savePoints_;
-
-    void popSavePoint() pure @safe
-        in (savePoints_[].length > 0)
-    {
-        savePoints_.shrinkTo(savePoints_[].length - 1);
-    }
 }
 
 ///
@@ -184,6 +179,17 @@ Params:
 struct MemoizedArraySource(S, Tag)
 {
     /**
+    Node type.
+    */
+    struct Node
+    {
+        Tag tag;
+        size_t start;
+        size_t end;
+        Node[] children;
+    }
+
+    /**
     copy constructor disabled.
     */
     @disable this(ref return scope MemoizedArraySource rhs);
@@ -209,6 +215,7 @@ struct MemoizedArraySource(S, Tag)
     void begin()
     {
         innerSource.begin();
+        nodeSavePoints_ ~= Nullable!NodeSavePoint.init;
     }
 
     /**
@@ -217,23 +224,65 @@ struct MemoizedArraySource(S, Tag)
     void begin(Tag tag)
     {
         innerSource.begin();
+        nodeSavePoints_ ~= NodeSavePoint(tag, position, nodes_[].length).nullable;
+    }
+
+    /**
+    accept current backtrackable point.
+    */
+    void accept()
+    {
+        innerSource.accept();
+
+        auto savedNode = popNodeSavePoint();
+        if (!savedNode.isNull)
+        {
+            auto saved = savedNode.get;
+            auto children = nodes_[][saved.nodesStart .. $].dup;
+            nodes_.shrinkTo(saved.nodesStart);
+            nodes_ ~= Node(saved.tag, saved.start, position, children);
+        }
+    }
+
+    /**
+    reject current backtrackable point and restore state.
+    */
+    void reject()
+    {
+        innerSource.reject();
+        auto savedNode = popNodeSavePoint();
+        if (!savedNode.isNull)
+        {
+            nodes_.shrinkTo(savedNode.get.nodesStart);
+        }
+    }
+
+    /**
+    Get current nodes.
+    */
+    @property const(Node)[] nodes() const
+    {
+        return nodes_[];
     }
 
 private:
 
-    struct MemoizeKey
+    struct NodeSavePoint
     {
         Tag tag;
-        size_t position;
+        size_t start;
+        size_t nodesStart;
     }
 
-    struct MemoizeEntry
-    {
-        Tag tag;
-        size_t position;
-        size_t end;
+    Appender!(Node[]) nodes_;
+    Appender!(Nullable!(NodeSavePoint)[]) nodeSavePoints_;
 
-        MemoizeEntry[] children;
+    Nullable!NodeSavePoint popNodeSavePoint()
+        in (nodeSavePoints_[].length > 0)
+    {
+        auto savedNode = nodeSavePoints_[][$ - 1];
+        nodeSavePoints_.popAppender();
+        return savedNode;
     }
 }
 
@@ -304,5 +353,68 @@ pure @safe unittest
     source.reject();
     assert(source.position == 1);
     assert(source.front == 'e');
+}
+
+///
+pure @safe unittest
+{
+    import karasux.parser.core.traits : isBacktrackableSource;
+
+    scope source = MemoizedArraySource!(immutable(char), string)("test");
+    alias Node = typeof(source).Node;
+
+    source.begin("test");
+
+    source.begin("te");
+    source.popFront();
+    source.popFront();
+    source.accept();
+
+    source.begin("st");
+    source.popFront();
+    source.popFront();
+    source.accept();
+
+    source.accept();
+
+    assert(source.nodes == [
+        Node("test", 0, 4, [
+            Node("te", 0, 2),
+            Node("st", 2, 4),
+        ])
+    ]);
+}
+
+///
+pure @safe unittest
+{
+    import karasux.parser.core.traits : isBacktrackableSource;
+
+    scope source = MemoizedArraySource!(immutable(char), string)("test");
+    alias Node = typeof(source).Node;
+
+    source.begin("test");
+
+    source.begin("te");
+    source.popFront();
+    source.popFront();
+    source.accept();
+
+    source.begin("st");
+    source.popFront();
+    source.popFront();
+    source.accept();
+
+    source.reject();
+
+    assert(source.nodes.length == 0);
+}
+
+private:
+
+void popAppender(T)(scope ref Appender!T appender)
+    in (appender[].length > 0)
+{
+    appender.shrinkTo(appender[].length - 1);
 }
 
