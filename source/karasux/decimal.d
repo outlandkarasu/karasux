@@ -319,10 +319,10 @@ struct Decimal
     ///
     @nogc nothrow pure unittest
     {
-        import std.math : approxEqual;
-        assert(approxEqual(cast(double) Decimal(123456, 0), 123456.0));
-        assert(approxEqual(cast(double) Decimal(123456, 3), 123.456));
-        assert(approxEqual(cast(double) Decimal(-123456, 3), -123.456));
+        import std.math : isClose;
+        assert(isClose(cast(double) Decimal(123456, 0), 123456.0));
+        assert(isClose(cast(double) Decimal(123456, 3), 123.456));
+        assert(isClose(cast(double) Decimal(-123456, 3), -123.456));
     }
 
     /**
