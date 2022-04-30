@@ -179,8 +179,9 @@ Memoized array source.
 
 Params:
     S = symbol type.
+    Tag = tag type.
 */
-struct MemoizedArraySource(S)
+struct MemoizedArraySource(S, Tag)
 {
     /**
     copy constructor disabled.
@@ -201,6 +202,39 @@ struct MemoizedArraySource(S)
     alias innerSource this;
 
     ArraySource!S innerSource;
+
+    /**
+    begin node.
+    */
+    void begin()
+    {
+        innerSource.begin();
+    }
+
+    /**
+    begin node.
+    */
+    void begin(Tag tag)
+    {
+        innerSource.begin();
+    }
+
+private:
+
+    struct MemoizeKey
+    {
+        Tag tag;
+        size_t position;
+    }
+
+    struct MemoizeEntry
+    {
+        Tag tag;
+        size_t position;
+        size_t end;
+
+        MemoizeEntry[] children;
+    }
 }
 
 ///
@@ -208,7 +242,7 @@ struct MemoizedArraySource(S)
 {
     import karasux.parser.core.traits : isInputSource;
 
-    scope source = MemoizedArraySource!(immutable(char))("test");
+    scope source = MemoizedArraySource!(immutable(char), string)("test");
     static assert(isInputSource!(typeof(source)));
 
     assert(!source.empty);
@@ -240,7 +274,7 @@ pure @safe unittest
 {
     import karasux.parser.core.traits : isBacktrackableSource;
 
-    scope source = MemoizedArraySource!(immutable(char))("test");
+    scope source = MemoizedArraySource!(immutable(char), string)("test");
     static assert(isBacktrackableSource!(typeof(source)));
 
     source.popFront();
