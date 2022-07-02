@@ -11,6 +11,7 @@ import std.range :
     save;
 
 import karasux.parser.core.traits :
+    isBacktrackableSource,
     isInputSource,
     isForwardRangeSource;
 
@@ -196,6 +197,50 @@ pure unittest
     assert(!source.symbols("abcd"));
     assert(source == "abc");
 }
+
+/**
+Symbols parser.
+
+Params:
+    r = source range.
+    s = expected symbols.
+Returns:
+    true if r starts s.
+*/
+bool symbols(R, S)(auto scope ref R r, S s)
+    if (isBacktrackableSource!R)
+{
+    r.begin();
+    if (!r.isMatch(s))
+    {
+        r.reject();
+        return false;
+    }
+    
+    r.accept();
+    return true;
+}
+
+///
+pure unittest
+{
+    auto source = "a";
+    assert(source.symbols("a"));
+    assert(source.length == 0);
+
+    source = "abc";
+    assert(source.symbols("ab"));
+    assert(source == "c");
+
+    source = "abc";
+    assert(!source.symbols("abd"));
+    assert(source == "abc");
+
+    source = "abc";
+    assert(!source.symbols("abcd"));
+    assert(source == "abc");
+}
+
 
 private bool isMatch(R, S)(auto scope ref R r, S s)
     if (isInputSource!S)
