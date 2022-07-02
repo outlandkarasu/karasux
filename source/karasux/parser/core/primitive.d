@@ -165,18 +165,15 @@ Returns:
     true if r starts s.
 */
 bool symbols(R, S)(auto scope ref R r, S s)
-    if (isForwardRangeSource!R && isInputSource!S)
+    if (isForwardRangeSource!R)
 {
     auto before = r.save;
-    for(auto expected = s; !expected.empty; expected.popFront(), r.popFront())
+    if (!r.isMatch(s))
     {
-        if (r.empty || r.front != expected.front)
-        {
-            r = before;
-            return false;
-        }
+        r = before;
+        return false;
     }
-
+    
     return true;
 }
 
@@ -198,6 +195,20 @@ pure unittest
     source = "abc";
     assert(!source.symbols("abcd"));
     assert(source == "abc");
+}
+
+private bool isMatch(R, S)(auto scope ref R r, S s)
+    if (isInputSource!S)
+{
+    for(auto expected = s; !expected.empty; expected.popFront(), r.popFront())
+    {
+        if (r.empty || r.front != expected.front)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
