@@ -6,6 +6,8 @@ module karasux.parser.core.source;
 import std.array : Appender;
 import std.typecons : Nullable, nullable;
 
+import karasux.appender : popFront;
+
 /**
 Backtrackable array source.
 
@@ -72,7 +74,7 @@ struct ArraySource(S)
     void accept()
         in (savePoints_[].length > 0)
     {
-        savePoints_.popAppender();
+        savePoints_.popFront();
     }
 
     /**
@@ -82,7 +84,7 @@ struct ArraySource(S)
         in (savePoints_[].length > 0)
     {
         position_ = savePoints_[][$ - 1];
-        savePoints_.popAppender();
+        savePoints_.popFront();
     }
 
     /**
@@ -281,7 +283,7 @@ private:
         in (nodeSavePoints_[].length > 0)
     {
         auto savedNode = nodeSavePoints_[][$ - 1];
-        nodeSavePoints_.popAppender();
+        nodeSavePoints_.popFront();
         return savedNode;
     }
 }
@@ -408,13 +410,5 @@ pure @safe unittest
     source.reject();
 
     assert(source.nodes.length == 0);
-}
-
-private:
-
-void popAppender(T)(scope ref Appender!T appender)
-    in (appender[].length > 0)
-{
-    appender.shrinkTo(appender[].length - 1);
 }
 
