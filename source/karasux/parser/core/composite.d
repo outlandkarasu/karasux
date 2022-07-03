@@ -9,6 +9,37 @@ import karasux.parser.core.traits :
     isParser;
 
 /**
+Optional parser.
+
+Params:
+    P = inner parser
+    S = source type
+
+*/
+bool optional(alias P, S)(auto scope ref S source)
+    if (isParser!(P, S) && isInputSource!S)
+{
+    P(source);
+    return true;
+}
+
+///
+pure @safe unittest
+{
+    import karasux.parser.core.primitive : symbol;
+    bool f(scope ref string source)
+    {
+        return source.symbol('t');
+    }
+
+    auto source = "test";
+    assert(source.optional!(f));
+    assert(source == "est");
+    assert(source.optional!(f));
+    assert(source == "est");
+}
+
+/**
 Semantic event type.
 */
 enum SemanticEventType
@@ -61,7 +92,6 @@ bool action(alias P, alias A, S)(auto scope ref S source)
 @nogc nothrow pure @safe unittest
 {
     import karasux.parser.core.primitive : any;
-    import karasux.parser.core.traits : isParser;
 
     auto lastEvent = SemanticEventType.reject;
     void f(string s, SemanticEventType event)
