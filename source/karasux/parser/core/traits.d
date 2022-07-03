@@ -24,23 +24,23 @@ enum isInputSource(R) = isInputRange!(Unqual!R);
 }
 
 /**
-Forward range source traits.
+Forward source traits.
 */
-enum isForwardRangeSource(R) = isInputSource!R && isForwardRange!(Unqual!R);
+enum isForwardSource(R) = isInputSource!R && isForwardRange!(Unqual!R);
 
 ///
 @nogc nothrow pure @safe unittest
 {
-    static assert(isForwardRangeSource!string);
-    static assert(isForwardRangeSource!(ubyte[]));
-    static assert(!isForwardRangeSource!void);
-    static assert(!isForwardRangeSource!char);
+    static assert(isForwardSource!string);
+    static assert(isForwardSource!(ubyte[]));
+    static assert(!isForwardSource!void);
+    static assert(!isForwardSource!char);
 }
 
 /**
 Parser traits.
 */
-enum isParser(alias P, S) = is(typeof((scope ref S s) => P(s))) && is(ReturnType!((S s) => P(s)) == bool);
+enum isParser(alias P, S) = isInputSource!S && is(typeof((scope ref S s) => P(s))) && is(ReturnType!((S s) => P(s)) == bool);
 
 ///
 @nogc nothrow pure @safe unittest

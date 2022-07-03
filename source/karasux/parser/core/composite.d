@@ -5,17 +5,23 @@ module karasux.core.composite;
 
 import karasux.parser.core.traits :
     isInputSource,
-    isForwardRangeSource;
+    isForwardSource,
+    isParser;
 
 /**
-Event type.
+Semantic event type.
 */
-enum ParsingEventType
+enum SemanticEventType
 {
     begin,
     accept,
     reject = -1,
 }
+
+/**
+Semantic action trait.
+*/
+enum isSemanticAction(alias A, S) = isInputSource!S && is(typeof((auto scope ref const(S) s) => A(s, SemanticEventType.init)));
 
 /**
 Parse with semantic action.
@@ -29,8 +35,27 @@ Returns:
     parsing result
 */
 bool action(S, alias P, alias A)(auto scope ref S source)
-    if (isInputSource!S)
+    if (isParser!(P, S) && isSemanticAction!(A, S))
 {
     return false;
 }
 
+/+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.core.primitive : any;
+    import karasux.parser.core.traits : isParser;
+
+    static assert(isParser!(any, string));
+    auto lastEvent = SemanticEventType.reject;
+    void f(SemanticEventType event)
+    {
+        lastEvent = event;
+    }
+
+    auto source = "test";
+    assert(source.action!(any, f));
+    assert(lastEvent == SemanticEventType.accept);
+}
++/

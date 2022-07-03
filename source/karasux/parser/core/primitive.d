@@ -12,7 +12,7 @@ import std.range :
 
 import karasux.parser.core.traits :
     isInputSource,
-    isForwardRangeSource;
+    isForwardSource;
 
 /**
 Always true parser.
@@ -165,7 +165,7 @@ Returns:
     true if r starts s.
 */
 bool symbols(R, S)(auto scope ref R r, S s)
-    if (isForwardRangeSource!R)
+    if (isForwardSource!R)
 {
     auto before = r.save;
     for(auto expected = s; !expected.empty; expected.popFront(), r.popFront())
