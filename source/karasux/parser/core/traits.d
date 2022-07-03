@@ -7,7 +7,7 @@ import std.range :
     isForwardRange,
     isInputRange;
 
-import std.traits : Unqual;
+import std.traits : Unqual, ReturnType;
 
 /**
 Input source traits.
@@ -36,4 +36,9 @@ enum isForwardRangeSource(R) = isInputSource!R && isForwardRange!(Unqual!R);
     static assert(!isForwardRangeSource!void);
     static assert(!isForwardRangeSource!char);
 }
+
+/**
+Parser traits.
+*/
+enum isParser(alias P, S) = is(typeof((scope ref S s) => P(s))) && !is(ReturnType!((S s) => P(s)) == bool);
 
