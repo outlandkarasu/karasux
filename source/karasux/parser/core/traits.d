@@ -37,17 +37,3 @@ enum isForwardRangeSource(R) = isInputSource!R && isForwardRange!(Unqual!R);
     static assert(!isForwardRangeSource!char);
 }
 
-/**
-Positional source traits.
-*/
-enum isPositionalSource(R) = isInputSource!R
-    && is(typeof((R r) => r.position == cast(size_t) 0));
-
-/**
-Backtrackable source traits.
-*/
-enum isBacktrackableSource(R) = isInputSource!R
-    && is(typeof((R r) => r.begin))
-    && is(typeof((R r) => r.accept))
-    && is(typeof((R r) => r.reject));
-
