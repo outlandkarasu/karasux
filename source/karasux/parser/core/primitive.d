@@ -7,6 +7,7 @@ import std.range :
     ElementType,
     empty,
     front,
+    isInputRange,
     popFront,
     save;
 
@@ -18,12 +19,13 @@ import karasux.parser.core.traits :
 Always true parser.
 
 Params:
-    r = input range.
+    S = source type.
+    source = target source.
 Returns:
     always true.
 */
-bool alwaysTrue(R)(auto scope ref R r)
-    if (isInputSource!R)
+bool alwaysTrue(S)(auto scope ref S source)
+    if (isInputSource!S)
 {
     return true;
 }
@@ -43,12 +45,13 @@ bool alwaysTrue(R)(auto scope ref R r)
 Always false parser.
 
 Params:
-    r = input range.
+    S = source type.
+    source = target source.
 Returns:
     always false.
 */
-bool alwaysFalse(R)(auto scope ref R r)
-    if (isInputSource!R)
+bool alwaysFalse(S)(auto scope ref S source)
+    if (isInputSource!S)
 {
     return false;
 }
@@ -68,14 +71,15 @@ bool alwaysFalse(R)(auto scope ref R r)
 End of source parser.
 
 Params:
-    r = input range.
+    S = source type.
+    source = target source.
 Returns:
     true if range is empty.
 */
-bool endOfSource(R)(auto scope ref R r)
-    if (isInputSource!R)
+bool endOfSource(S)(auto scope ref S source)
+    if (isInputSource!S)
 {
-    return r.empty;
+    return source.empty;
 }
 
 ///
@@ -93,19 +97,20 @@ bool endOfSource(R)(auto scope ref R r)
 any character parser.
 
 Params:
-    r = input range.
+    S = source type.
+    source = target source.
 Returns:
     true if range is not empty.
 */
-bool any(R)(auto scope ref R r)
-    if (isInputSource!R)
+bool any(S)(auto scope ref S source)
+    if (isInputSource!S)
 {
-    if (r.empty)
+    if (source.empty)
     {
         return false;
     }
 
-    r.popFront();
+    source.popFront();
     return true;
 }
 
@@ -124,20 +129,22 @@ bool any(R)(auto scope ref R r)
 Single symbol parser.
 
 Params:
-    r = source range.
-    c = an expected symbol.
+    S = source type.
+    Sym = symbol type.
+    source = target source.
+    s = an expected symbol.
 Returns:
-    true if r front is c.
+    true if source front is s.
 */
-bool symbol(R, C)(auto scope ref R r, C c)
-    if (isInputSource!R)
+bool symbol(S, Sym)(auto scope ref S source, Sym s)
+    if (isInputSource!S)
 {
-    if (r.empty || r.front != c)
+    if (source.empty || source.front != s)
     {
         return false;
     }
 
-    r.popFront();
+    source.popFront();
     return true;
 }
 
@@ -159,20 +166,22 @@ pure @safe unittest
 Symbols parser.
 
 Params:
-    r = source range.
+    S = source type.
+    Syms = expected symbols type.
+    source = target source.
     s = expected symbols.
 Returns:
-    true if r starts s.
+    true if source starts s.
 */
-bool symbols(R, S)(auto scope ref R r, S s)
-    if (isForwardSource!R)
+bool symbols(S, Syms)(auto scope ref S source, Syms s)
+    if (isForwardSource!S && isInputRange!Syms)
 {
-    auto before = r.save;
-    for(auto expected = s; !expected.empty; expected.popFront(), r.popFront())
+    auto before = source.save;
+    for(auto expected = s; !expected.empty; expected.popFront(), source.popFront())
     {
-        if (r.empty || r.front != expected.front)
+        if (source.empty || source.front != expected.front)
         {
-            r = before;
+            source = before;
             return false;
         }
     }
@@ -204,24 +213,26 @@ pure unittest
 Symbol set parser.
 
 Params:
-    r = source range.
+    S = source type.
+    Syms = symbol source type.
+    source = target source.
     s = expected symbol set.
 Returns:
     true if r front is in s.
 */
-bool symbolSet(R, S)(auto scope ref R r, S s)
-    if (isInputSource!R && isInputSource!S)
+bool symbolSet(S, Syms)(auto scope ref S source, Syms s)
+    if (isInputSource!S && isInputRange!Syms)
 {
-    if (r.empty)
+    if (source.empty)
     {
         return false;
     }
 
     for(auto expected = s; !expected.empty; expected.popFront())
     {
-        if (r.front == expected.front)
+        if (source.front == expected.front)
         {
-            r.popFront();
+            source.popFront();
             return true;
         }
     }
