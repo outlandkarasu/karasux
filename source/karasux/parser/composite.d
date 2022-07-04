@@ -28,16 +28,47 @@ pure @safe unittest
 {
     import karasux.parser.primitive : symbol;
 
-    bool f(scope ref string source)
+    auto source = "test";
+    assert(source.optional!((ref s) => s.symbol('t')));
+    assert(source == "est");
+    assert(source.optional!((ref s) => s.symbol('t')));
+    assert(source == "est");
+}
+
+/**
+test parser.
+
+Params:
+    P = inner parser
+    S = source type
+    source = target source
+Returns:
+    true if matched. source position seeks to begin.
+*/
+bool testAnd(alias P, S)(auto scope ref S source)
+    if (isParser!(P, S) && isSeekableSource!S)
+{
+    auto current = source.position;
+    scope(exit)
     {
-        return source.symbol('t');
+        source.seek(current);
     }
 
-    auto source = "test";
-    assert(source.optional!(f));
-    assert(source == "est");
-    assert(source.optional!(f));
-    assert(source == "est");
+    return P(source);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.primitive : symbol;
+    import karasux.parser.source : arraySource;
+
+    auto source = arraySource("test");
+    assert(source.testAnd!((ref s) => s.symbol('t')));
+    assert(source.position == 0);
+
+    assert(!source.testAnd!((ref s) => s.symbol('e')));
+    assert(source.position == 0);
 }
 
 /**
