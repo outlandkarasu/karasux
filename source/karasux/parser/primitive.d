@@ -192,24 +192,24 @@ bool symbols(S, Syms)(auto scope ref S source, Syms s)
 ///
 pure unittest
 {
-    import karasux.parser.source : ArraySource;
+    import karasux.parser.source : arraySource;
 
-    auto source = ArraySource!char("a");
+    auto source = arraySource("a");
     assert(source.symbols("a"));
     assert(source.position == 1);
     assert(source.empty);
 
-    source = ArraySource!char("abc");
+    source = arraySource("abc");
     assert(source.symbols("ab"));
     assert(source.position == 2);
     assert(source.front == 'c');
 
-    source = ArraySource!char("abc");
+    source = arraySource("abc");
     assert(!source.symbols("abd"));
     assert(source.position == 0);
     assert(source.front == 'a');
 
-    source = ArraySource!char("abc");
+    source = arraySource("abc");
     assert(!source.symbols("abcd"));
     assert(source.position == 0);
     assert(source.front == 'a');

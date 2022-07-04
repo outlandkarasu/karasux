@@ -28,7 +28,7 @@ struct ArraySource(E)
     Params:
         source = source array.
     */
-    this(const(E)[] source) @nogc nothrow pure @safe scope
+    this(return scope const(E)[] source) @nogc nothrow pure @safe scope
     {
         this.array_ = source;
         this.position_ = 0;
@@ -114,5 +114,35 @@ private:
     source.popFront();
     assert(source.empty);
     assert(source.position == 4);
+}
+
+/**
+Create array source.
+
+Params:
+    E = element type.
+    source = source array
+Returns:
+    ArraySource
+*/
+ArraySource!E arraySource(E)(return scope const(E)[] source)
+{
+    return ArraySource!E(source);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    auto source = arraySource("test");
+    foreach (i, c; "test")
+    {
+        assert(source.front == c);
+        assert(source.position == i);
+        assert(!source.empty);
+        source.popFront();
+    }
+
+    assert(source.position == 4);
+    assert(source.empty);
 }
 
