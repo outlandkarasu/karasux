@@ -149,17 +149,18 @@ bool symbol(S, Sym)(auto scope ref S source, Sym s)
 }
 
 ///
-pure @safe unittest
+@nogc nothrow pure @safe unittest
 {
-    assert("a".symbol('a'));
-    assert(!"b".symbol('a'));
-    assert(!"".symbol('a'));
+    import karasux.parser.source : arraySource;
+    assert(arraySource("a").symbol('a'));
+    assert(!arraySource("b").symbol('a'));
+    assert(!arraySource("").symbol('a'));
 
-    auto source = "abc";
+    auto source = arraySource("abc");
     assert(source.symbol('a'));
-    assert(source == "bc");
+    assert(source.position == 1);
     assert(!source.symbol('a'));
-    assert(source == "bc");
+    assert(source.position == 1);
 }
 
 /**
@@ -190,27 +191,27 @@ bool symbols(S, Syms)(auto scope ref S source, Syms s)
 }
 
 ///
-pure unittest
+@nogc nothrow pure @safe unittest
 {
     import karasux.parser.source : arraySource;
 
     auto source = arraySource("a");
-    assert(source.symbols("a"));
+    assert(source.symbols("a"d));
     assert(source.position == 1);
     assert(source.empty);
 
     source = arraySource("abc");
-    assert(source.symbols("ab"));
+    assert(source.symbols("ab"d));
     assert(source.position == 2);
     assert(source.front == 'c');
 
     source = arraySource("abc");
-    assert(!source.symbols("abd"));
+    assert(!source.symbols("abd"d));
     assert(source.position == 0);
     assert(source.front == 'a');
 
     source = arraySource("abc");
-    assert(!source.symbols("abcd"));
+    assert(!source.symbols("abcd"d));
     assert(source.position == 0);
     assert(source.front == 'a');
 }
@@ -247,22 +248,24 @@ bool symbolSet(S, Syms)(auto scope ref S source, Syms s)
 }
 
 ///
-pure @safe unittest
+@nogc nothrow pure @safe unittest
 {
-    auto source = "abc";
-    assert(source.symbolSet("abc"));
-    assert(source == "bc");
+    import karasux.parser.source : arraySource;
 
-    source = "abc";
-    assert(!source.symbolSet("123"));
-    assert(source == "abc");
+    auto source = arraySource("abc");
+    assert(source.symbolSet("abc"d));
+    assert(source.position == 1);
 
-    source = "";
-    assert(!source.symbolSet(""));
-    assert(source == "");
+    source = arraySource("abc");
+    assert(!source.symbolSet("123"d));
+    assert(source.position == 0);
 
-    source = "abc";
-    assert(!source.symbolSet(""));
-    assert(source == "abc");
+    source = arraySource("");
+    assert(!source.symbolSet(""d));
+    assert(source.position == 0);
+
+    source = arraySource("abc");
+    assert(!source.symbolSet(""d));
+    assert(source.position == 0);
 }
 
