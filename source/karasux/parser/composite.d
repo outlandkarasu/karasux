@@ -71,3 +71,39 @@ bool testAnd(alias P, S)(auto scope ref S source)
     assert(source.position == 0);
 }
 
+/**
+not parser.
+
+Params:
+    P = inner parser
+    S = source type
+    source = target source
+Returns:
+    false if matched. source position seeks to begin.
+*/
+bool testNot(alias P, S)(auto scope ref S source)
+    if (isParser!(P, S) && isSeekableSource!S)
+{
+    auto current = source.position;
+    scope(exit)
+    {
+        source.seek(current);
+    }
+
+    return !P(source);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.primitive : symbol;
+    import karasux.parser.source : arraySource;
+
+    auto source = arraySource("test");
+    assert(!source.testNot!((ref s) => s.symbol('t')));
+    assert(source.position == 0);
+
+    assert(source.testNot!((ref s) => s.symbol('e')));
+    assert(source.position == 0);
+}
+
