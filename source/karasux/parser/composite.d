@@ -1,12 +1,12 @@
 /**
 Composite parsers.
 */
-module karasux.core.composite;
+module karasux.parser.composite;
 
-import karasux.parser.core.traits :
+import karasux.parser.source :
     isInputSource,
-    isForwardSource,
-    isParser;
+    isSeekableSource;
+import karasux.parser.traits : isParser;
 
 /**
 Optional parser.
@@ -26,7 +26,8 @@ bool optional(alias P, S)(auto scope ref S source)
 ///
 pure @safe unittest
 {
-    import karasux.parser.core.primitive : symbol;
+    import karasux.parser.primitive : symbol;
+
     bool f(scope ref string source)
     {
         return source.symbol('t');
@@ -91,7 +92,7 @@ bool action(alias P, alias A, S)(auto scope ref S source)
 ///
 @nogc nothrow pure @safe unittest
 {
-    import karasux.parser.core.primitive : any;
+    import karasux.parser.primitive : any;
 
     auto lastEvent = SemanticEventType.reject;
     void f(string s, SemanticEventType event)

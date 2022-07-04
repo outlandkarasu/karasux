@@ -1,7 +1,7 @@
 /**
 Primitive parsers module.
 */
-module karasux.parser.core.primitive;
+module karasux.parser.primitive;
 
 import std.range :
     ElementType,
@@ -11,9 +11,9 @@ import std.range :
     popFront,
     save;
 
-import karasux.parser.core.traits :
+import karasux.parser.source.traits :
     isInputSource,
-    isForwardSource;
+    isSeekableSource;
 
 /**
 Always true parser.
@@ -174,14 +174,14 @@ Returns:
     true if source starts s.
 */
 bool symbols(S, Syms)(auto scope ref S source, Syms s)
-    if (isForwardSource!S && isInputRange!Syms)
+    if (isSeekableSource!S && isInputRange!Syms)
 {
-    auto before = source.save;
-    for(auto expected = s; !expected.empty; expected.popFront(), source.popFront())
+    auto before = source.position;
+    for (auto expected = s; !expected.empty; expected.popFront(), source.popFront())
     {
         if (source.empty || source.front != expected.front)
         {
-            source = before;
+            source.seek(before);
             return false;
         }
     }
@@ -192,21 +192,27 @@ bool symbols(S, Syms)(auto scope ref S source, Syms s)
 ///
 pure unittest
 {
-    auto source = "a";
+    import karasux.parser.source : ArraySource;
+
+    auto source = ArraySource!char("a");
     assert(source.symbols("a"));
-    assert(source.length == 0);
+    assert(source.position == 1);
+    assert(source.empty);
 
-    source = "abc";
+    source = ArraySource!char("abc");
     assert(source.symbols("ab"));
-    assert(source == "c");
+    assert(source.position == 2);
+    assert(source.front == 'c');
 
-    source = "abc";
+    source = ArraySource!char("abc");
     assert(!source.symbols("abd"));
-    assert(source == "abc");
+    assert(source.position == 0);
+    assert(source.front == 'a');
 
-    source = "abc";
+    source = ArraySource!char("abc");
     assert(!source.symbols("abcd"));
-    assert(source == "abc");
+    assert(source.position == 0);
+    assert(source.front == 'a');
 }
 
 /**
