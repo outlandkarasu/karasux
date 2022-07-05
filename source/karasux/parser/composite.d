@@ -3,6 +3,8 @@ Composite parsers.
 */
 module karasux.parser.composite;
 
+import std.meta : allSatisfy, ApplyRight;
+
 import karasux.parser.source :
     isInputSource,
     isSeekableSource;
@@ -105,5 +107,47 @@ bool testNot(alias P, S)(auto scope ref S source)
 
     assert(source.testNot!((ref s) => s.symbol('e')));
     assert(source.position == 0);
+}
+
+/**
+Parsers sequence
+
+Params:
+    P = parsers
+*/
+template sequence(P...)
+{
+    bool sequence(S)(auto scope ref S source)
+        if (allSatisfy!(ApplyRight!(isParser, S), P) && isSeekableSource!S)
+    {
+        auto before = source.position;
+        foreach (p; P)
+        {
+            if (!p(source))
+            {
+                source.seek(before);
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.primitive : symbol;
+    import karasux.parser.source : arraySource;
+
+    auto source = arraySource("test");
+    assert(source.sequence!(
+        (scope ref s) => s.symbol('t'),
+        (scope ref s) => s.symbol('e')));
+    assert(source.position == 2);
+
+    assert(!source.sequence!(
+        (scope ref s) => s.symbol('s'),
+        (scope ref s) => s.symbol('u')));
+    assert(source.position == 2);
 }
 
