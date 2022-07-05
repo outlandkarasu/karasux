@@ -19,7 +19,7 @@ Params:
 
 */
 bool optional(alias P, S)(auto scope ref S source)
-    if (isParser!(P, S) && isInputSource!S)
+    if (isParser!(P, S))
 {
     P(source);
     return true;
@@ -48,7 +48,7 @@ Returns:
     true if matched. source position seeks to begin.
 */
 bool testAnd(alias P, S)(auto scope ref S source)
-    if (isParser!(P, S) && isSeekableSource!S)
+    if (isSeekableSource!S && isParser!(P, S))
 {
     auto current = source.position;
     scope(exit)
@@ -84,7 +84,7 @@ Returns:
     false if matched. source position seeks to begin.
 */
 bool testNot(alias P, S)(auto scope ref S source)
-    if (isParser!(P, S) && isSeekableSource!S)
+    if (isSeekableSource!S && isParser!(P, S))
 {
     auto current = source.position;
     scope(exit)
@@ -118,7 +118,7 @@ Params:
 template sequence(P...)
 {
     bool sequence(S)(auto scope ref S source)
-        if (allSatisfy!(ApplyRight!(isParser, S), P) && isSeekableSource!S)
+        if (isSeekableSource!S && allSatisfy!(ApplyRight!(isParser, S), P))
     {
         auto before = source.position;
         foreach (p; P)
@@ -160,7 +160,7 @@ Params:
 template choice(P...)
 {
     bool choice(S)(auto scope ref S source)
-        if (allSatisfy!(ApplyRight!(isParser, S), P) && isInputSource!S)
+        if (isInputSource!S && allSatisfy!(ApplyRight!(isParser, S), P))
     {
         foreach (p; P)
         {
