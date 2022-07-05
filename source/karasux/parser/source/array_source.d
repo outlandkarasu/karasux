@@ -11,11 +11,6 @@ Params:
 */
 struct ArraySource(E)
 {
-    /**
-    Element type.
-    */
-    alias ElementType = E;
-
     // not copyiable.
     @disable this(this);
 
