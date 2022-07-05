@@ -23,6 +23,13 @@ enum isInputSource(R) = isInputRange!R;
 Seekable source traits.
 */
 enum isSeekableSource(R) = isInputSource!R
-    && is(typeof((auto scope ref R) => r.position))
+    && is(typeof((auto scope ref R) @nogc nothrow pure @safe => r.position))
     && is(typeof((auto scope ref R) { auto p = r.position; r.seek(p); }));
+
+/**
+Line counted source traits.
+*/
+enum isLineCountedSource(R) = isSeekableSource!R
+    && is(typeof((auto scope ref R) => r.currentLine) == size_t)
+    && is(typeof((auto scope ref R) => r.addLine()));
 

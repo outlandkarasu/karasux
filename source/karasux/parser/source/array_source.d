@@ -11,12 +11,6 @@ Params:
 */
 struct ArraySource(E)
 {
-    // not copyiable.
-    @disable this(this);
-
-    // not copyiable.
-    @disable this(ref return scope ArraySource rhs);
-
     /**
     Initialize from source array.
 
