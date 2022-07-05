@@ -30,6 +30,6 @@ enum isSeekableSource(R) = isInputSource!R
 Line counted source traits.
 */
 enum isLineCountedSource(R) = isSeekableSource!R
-    && is(typeof((auto scope ref R) => r.currentLine) == size_t)
+    && is(typeof((auto scope ref R) => r.currentLine))
     && is(typeof((auto scope ref R) => r.addLine()));
 

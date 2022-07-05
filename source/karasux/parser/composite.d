@@ -7,6 +7,7 @@ import std.meta : allSatisfy, ApplyRight;
 
 import karasux.parser.source :
     isInputSource,
+    isLineCountedSource,
     isSeekableSource;
 import karasux.parser.traits : isParser;
 
@@ -194,5 +195,44 @@ template choice(P...)
         (scope ref s) => s.symbol('t'),
         (scope ref s) => s.symbol('e')));
     assert(source == "st");
+}
+
+/**
+Add line count parser.
+
+Params:
+    P = inner parser.
+    source = target source
+Returns:
+    true if matched and add line count.
+*/
+bool newLine(alias P, S)(auto scope ref S source)
+    if (isLineCountedSource!S && isParser!(P, S))
+{
+    if (P(source))
+    {
+        source.addLine();
+        return true;
+    }
+
+    return false;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.primitive : symbol;
+    import karasux.parser.source : arraySource, lineCounted;
+
+    auto source = lineCounted(arraySource("test"));
+    assert(source.newLine!((ref s) => s.symbol('t')));
+    assert(source.position.position == 1);
+    assert(source.position.line == 1);
+    assert(source.front == 'e');
+
+    assert(!source.newLine!((ref s) => s.symbol('t')));
+    assert(source.position.position == 1);
+    assert(source.position.line == 1);
+    assert(source.front == 'e');
 }
 

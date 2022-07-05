@@ -75,8 +75,10 @@ private:
 @nogc nothrow pure @safe unittest
 {
     import karasux.parser.source.array_source : ArraySource, arraySource;
+    import karasux.parser.source.traits : isLineCountedSource;
 
     auto source = lineCounted(arraySource("test"));
+    static assert(isLineCountedSource!(typeof(source)));
 
     assert(source.front == 't');
     assert(source.position == PositionWithLine(0, 0));
