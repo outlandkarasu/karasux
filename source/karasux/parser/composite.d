@@ -151,3 +151,48 @@ template sequence(P...)
     assert(source.position == 2);
 }
 
+/**
+Parsers choice
+
+Params:
+    P = parsers
+*/
+template choice(P...)
+{
+    bool choice(S)(auto scope ref S source)
+        if (allSatisfy!(ApplyRight!(isParser, S), P) && isInputSource!S)
+    {
+        foreach (p; P)
+        {
+            if (p(source))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.primitive : symbol;
+    import karasux.parser.source : arraySource;
+
+    auto source = "test"d;
+    assert(source.choice!(
+        (scope ref s) => s.symbol('t'),
+        (scope ref s) => s.symbol('e')));
+    assert(source == "est");
+
+    assert(source.choice!(
+        (scope ref s) => s.symbol('t'),
+        (scope ref s) => s.symbol('e')));
+    assert(source == "st");
+
+    assert(!source.choice!(
+        (scope ref s) => s.symbol('t'),
+        (scope ref s) => s.symbol('e')));
+    assert(source == "st");
+}
+
