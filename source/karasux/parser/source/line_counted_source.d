@@ -22,6 +22,8 @@ Params:
 */
 struct LineCountedSource(R)
 {
+    static assert(isInputSource!R);
+
     /**
     Initialize from inner source.
 
