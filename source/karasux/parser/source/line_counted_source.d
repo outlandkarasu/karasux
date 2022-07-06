@@ -3,7 +3,16 @@ Line counted source module.
 */
 module karasux.parser.source.line_counted_source;
 
-import karasux.parser.source.traits : isSeekableSource;
+import karasux.parser.source.traits :
+    isInputSource,
+    isSeekableSource;
+
+/**
+Line counted source traits.
+*/
+enum isLineCountedSource(R) = isInputSource!R
+    && is(typeof((scope ref R r) => r.currentLine))
+    && is(typeof((scope ref R r) => r.addLine()));
 
 /**
 Line counted source.
@@ -75,7 +84,6 @@ private:
 @nogc nothrow pure @safe unittest
 {
     import karasux.parser.source.array_source : ArraySource, arraySource;
-    import karasux.parser.source.traits : isLineCountedSource;
 
     auto source = lineCounted(arraySource("test"));
     static assert(isLineCountedSource!(typeof(source)));
@@ -124,7 +132,6 @@ private:
 pure @safe unittest
 {
     import std.range : front, popFront, empty;
-    import karasux.parser.source.traits : isLineCountedSource;
 
     auto source = lineCounted("test");
     static assert(isLineCountedSource!(typeof(source)));

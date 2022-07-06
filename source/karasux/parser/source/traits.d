@@ -26,10 +26,3 @@ enum isSeekableSource(R) = isInputSource!R
     && is(typeof((scope ref R r) @nogc nothrow pure @safe => r.position))
     && is(typeof((scope ref R r) { auto p = r.position; r.seek(p); }));
 
-/**
-Line counted source traits.
-*/
-enum isLineCountedSource(R) = isInputSource!R
-    && is(typeof((scope ref R r) => r.currentLine))
-    && is(typeof((scope ref R r) => r.addLine()));
-
