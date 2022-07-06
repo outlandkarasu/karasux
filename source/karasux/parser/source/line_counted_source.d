@@ -6,15 +6,6 @@ module karasux.parser.source.line_counted_source;
 import karasux.parser.source.traits : isSeekableSource;
 
 /**
-Source position with line.
-*/
-struct PositionWithLine
-{
-    size_t position;
-    size_t line;
-}
-
-/**
 Line counted source.
 
 Params:
@@ -22,8 +13,6 @@ Params:
 */
 struct LineCountedSource(R)
 {
-    static assert(isSeekableSource!R);
-
     /**
     Initialize from inner source.
 
@@ -44,23 +33,34 @@ struct LineCountedSource(R)
         ++currentLine_;
     }
 
-    @nogc nothrow pure @safe scope
+    @property size_t currentLine() const @nogc nothrow pure @safe
     {
-        @property size_t currentLine() const
+        return currentLine_;
+    }
+
+    static if (isSeekableSource!R)
+    {
+        alias PositionType = typeof(R.init.position);
+
+        /**
+        Source position with line.
+        */
+        struct PositionWithLine
         {
-            return currentLine_;
+            PositionType position;
+            size_t line;
         }
 
         @property PositionWithLine position() const
         {
             return PositionWithLine(inner.position, currentLine_);
         }
-    }
 
-    void seek()(auto scope ref const(PositionWithLine) position)
-    {
-        inner.seek(position.position);
-        currentLine_ = position.line;
+        void seek()(auto scope ref const(PositionWithLine) position)
+        {
+            inner.seek(position.position);
+            currentLine_ = position.line;
+        }
     }
 
     R inner;
@@ -81,35 +81,80 @@ private:
     static assert(isLineCountedSource!(typeof(source)));
 
     assert(source.front == 't');
-    assert(source.position == PositionWithLine(0, 0));
+    assert(source.position.position == 0);
+    assert(source.position.line == 0);
     assert(source.currentLine == 0);
     assert(!source.empty);
 
     source.popFront();
     assert(source.front == 'e');
-    assert(source.position == PositionWithLine(1, 0));
+    assert(source.position.position == 1);
+    assert(source.position.line == 0);
     assert(source.currentLine == 0);
 
     source.addLine();
-    assert(source.position == PositionWithLine(1, 1));
+    assert(source.position.position == 1);
+    assert(source.position.line == 1);
     assert(source.currentLine == 1);
+
     immutable before = source.position;
 
     source.popFront();
     source.addLine();
     assert(source.front == 's');
-    assert(source.position == PositionWithLine(2, 2));
+    assert(source.position.position == 2);
+    assert(source.position.line == 2);
     assert(source.currentLine == 2);
 
     source.seek(before);
     assert(source.front == 'e');
-    assert(source.position == PositionWithLine(1, 1));
+    assert(source.position.position == 1);
+    assert(source.position.line == 1);
     assert(source.currentLine == 1);
 
     source.popFront();
     source.popFront();
     source.popFront();
-    assert(source.position == PositionWithLine(4, 1));
+    assert(source.position.position == 4);
+    assert(source.position.line == 1);
+    assert(source.empty);
+}
+
+///
+pure @safe unittest
+{
+    import std.range : front, popFront, empty;
+    import karasux.parser.source.traits : isLineCountedSource;
+
+    auto source = lineCounted("test");
+    static assert(isLineCountedSource!(typeof(source)));
+
+    assert(source.front == 't');
+    assert(source.currentLine == 0);
+    assert(!source.empty);
+
+    source.popFront();
+    assert(source.front == 'e');
+    assert(source.currentLine == 0);
+    assert(!source.empty);
+
+    source.addLine();
+    assert(source.front == 'e');
+    assert(source.currentLine == 1);
+    assert(!source.empty);
+
+    source.popFront();
+    assert(source.front == 's');
+    assert(source.currentLine == 1);
+    assert(!source.empty);
+
+    source.popFront();
+    assert(source.front == 't');
+    assert(source.currentLine == 1);
+    assert(!source.empty);
+
+    source.popFront();
+    assert(source.currentLine == 1);
     assert(source.empty);
 }
 
