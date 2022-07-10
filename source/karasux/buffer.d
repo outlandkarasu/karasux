@@ -60,6 +60,19 @@ struct Buffer(T)
         {
             return buffer_.length;
         }
+
+        bool append()(auto scope ref const(T) value) scope
+        {
+            immutable nextIndex = length;
+            if (!resize(length + 1))
+            {
+                return false;
+            }
+
+            this[nextIndex] = value;
+
+            return true;
+        }
     }
 
 private:
@@ -87,5 +100,11 @@ private:
     assert(buffer.length == 10);
     assert(buffer[0].value == 100);
     assert(buffer[9].value == 100);
+
+    assert(buffer.append(Data(123)));
+    assert(buffer.length == 11);
+    assert(buffer[0].value == 100);
+    assert(buffer[9].value == 100);
+    assert(buffer[10].value == 123);
 }
 
