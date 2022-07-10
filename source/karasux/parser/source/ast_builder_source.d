@@ -5,9 +5,7 @@ module karasux.parser.source.ast_builder_source;
 
 import core.memory : pureCalloc, pureRealloc, pureFree;
 
-import karasux.parser.source.traits :
-    isInputSource,
-    isSeekableSource;
+import karasux.parser.source.traits : isInputSource;
 
 /**
 AST builder source trait.
@@ -17,18 +15,9 @@ Params:
 */
 enum isASTBuilderSource(R) = isInputSource!R
     && is(R.Tag)
-    && is(typeof((scope ref R r) @nogc nothrow pure @safe => r.nodePosition))
-    && is(typeof((scope ref R r) { auto p = r.nodePosition; r.acceptNode(R.Tag.init, p); }));
-
-/**
-rejectable AST builder source trait.
-
-Params:
-    R = source range type.
-*/
-enum isRejectableASTBuilderSource(R) = isSeekableSource!R
-    && isASTBuilderSource!R
-    && is(typeof((scope ref R r) { auto p = r.nodePosition; r.rejectNode(p); }));
+    && is(typeof((scope ref R r) => r.startNode(R.Tag.init)))
+    && is(typeof((scope ref R r) => r.acceptNode()))
+    && is(typeof((scope ref R r) => r.rejectNode()));
 
 /**
 AST builder source.
@@ -62,10 +51,6 @@ struct ASTBuilderSource(R, T)
 
     // not copyiable.
     @disable this(ref return scope ASTBuilderSource rhs);
-
-    ~this() @nogc nothrow pure @safe scope
-    {
-    }
 
     R inner;
 
