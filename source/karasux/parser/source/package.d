@@ -1,7 +1,7 @@
 /**
 Parser source package.
 */
-module karasux.parser.core.source;
+module karasux.parser.source;
 
 public import karasux.parser.source.array_source;
 public import karasux.parser.source.ast_builder_source;
