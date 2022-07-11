@@ -125,6 +125,31 @@ private:
     assert(source.position == 0);
     assert(source.nodePosition == 0);
     assert(!source.empty);
+
+    assert(source.startNode(0));
+    assert(source.position == 0);
+    assert(source.nodePosition == 1);
+
+    assert(source.startNode(123));
+    assert(source.position == 0);
+    assert(source.nodePosition == 2);
+
+    source.popFront();
+
+    assert(source.front == 'e');
+    assert(source.position == 1);
+    assert(source.nodePosition == 2);
+    assert(!source.empty);
+
+    assert(source.acceptNode(123));
+
+    assert(source.position == 1);
+    assert(source.nodePosition == 3);
+
+    // reject nodes but position is not reverted.
+    assert(source.rejectNode(0));
+    assert(source.position == 1);
+    assert(source.nodePosition == 0);
 }
 
 /**
