@@ -3,21 +3,7 @@ AST builder source module.
 */
 module karasux.parser.source.ast_builder_source;
 
-import core.memory : pureCalloc, pureRealloc, pureFree;
-
 import karasux.parser.source.traits : isInputSource;
-
-/**
-AST builder source trait.
-
-Params:
-    R = source range type.
-*/
-enum isASTBuilderSource(R) = isInputSource!R
-    && is(R.Tag)
-    && is(typeof((scope ref R r) => r.startNode(R.Tag.init)))
-    && is(typeof((scope ref R r) => r.acceptNode()))
-    && is(typeof((scope ref R r) => r.rejectNode()));
 
 /**
 AST builder source.
