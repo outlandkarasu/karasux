@@ -1,7 +1,7 @@
 /**
 Parser combinator package.
 */
-module parser;
+module karasux.parser;
 
 public import karasux.parser.action;
 public import karasux.parser.ast;
