@@ -6,6 +6,12 @@ module karasux.parser.source.ast_builder_source;
 import karasux.parser.source.traits : isInputSource;
 
 /**
+AST builder source trait.
+*/
+enum isASTBuilderSource(R) = isInputSource!R
+  && is(typeof((scope ref R r) => r.nodePosition));
+
+/**
 AST builder source.
 
 Params:
