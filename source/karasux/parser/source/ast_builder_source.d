@@ -9,7 +9,10 @@ import karasux.parser.source.traits : isInputSource;
 AST builder source trait.
 */
 enum isASTBuilderSource(R) = isInputSource!R
-  && is(typeof((scope ref R r) => r.nodePosition));
+  && is(typeof(R.Tag.init))
+  && is(typeof((scope ref R r) @nogc nothrow pure @safe => r.nodePosition))
+  && is(typeof((scope ref R r) { auto p = r.nodePosition; r.acceptNode(R.Tag.init, p); }))
+  && is(typeof((scope ref R r) { auto p = r.nodePosition; r.rejectNode(p); }));
 
 /**
 AST builder source.
