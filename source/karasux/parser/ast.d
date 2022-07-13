@@ -3,6 +3,8 @@ Parser AST module.
 */
 module karasux.parser.ast;
 
+import std.traits : ParameterTypeTuple;
+
 import karasux.buffer : Buffer;
 import karasux.parser.traits : isParser;
 import karasux.parser.source :
@@ -55,6 +57,13 @@ struct ASTBuilderSource(R, T)
         {
             return nodePosition;
         }
+    }
+
+    struct NodeEvent
+    {
+        Tag tag;
+        ASTNodeEventType type;
+        PositionType position;
     }
 
     /**
@@ -111,14 +120,22 @@ struct ASTBuilderSource(R, T)
         }
     }
 
-private:
-
-    struct NodeEvent
+    int opApply(Dg)(scope Dg dg) const
     {
-        Tag tag;
-        ASTNodeEventType type;
-        PositionType position;
+        int result = 0;
+        foreach (i; 0 .. events_.length)
+        {
+            result = dg(events_[i]);
+            if (result != 0)
+            {
+                return result;
+            }
+        }
+
+        return result;
     }
+
+private:
 
     bool addEvent(Tag tag, ASTNodeEventType eventType) @nogc nothrow pure @safe scope
     {
@@ -232,7 +249,42 @@ bool astNode(alias P, R, T)(auto scope ref ASTBuilderSource!(R, T) source, T tag
     import karasux.parser.source.array_source : arraySource;
 
     auto source = astBuilder!int(arraySource("test"));
+    alias NodeEvent = typeof(source).NodeEvent;
 
     assert(source.astNode!((scope ref s) => s.symbol('t'))(123));
+    assert(source.nodePosition == 2);
+
+    foreach (ref const(NodeEvent) event; source)
+    {
+        if (event.position == 0)
+        {
+            assert(event.tag == 123);
+            assert(event.type == ASTNodeEventType.start);
+        }
+        else
+        {
+            assert(event.position == 1);
+            assert(event.tag == 123);
+            assert(event.type == ASTNodeEventType.end);
+        }
+    }
+
+    assert(!source.astNode!((scope ref s) => s.symbol('t'))(125));
+    assert(source.nodePosition == 2);
+
+    foreach (ref const(NodeEvent) event; source)
+    {
+        if (event.position == 0)
+        {
+            assert(event.tag == 123);
+            assert(event.type == ASTNodeEventType.start);
+        }
+        else
+        {
+            assert(event.position == 1);
+            assert(event.tag == 123);
+            assert(event.type == ASTNodeEventType.end);
+        }
+    }
 }
 
