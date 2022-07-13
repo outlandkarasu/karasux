@@ -196,8 +196,7 @@ private:
     assert(!source.hasError);
 
     // reject nodes but position is not reverted.
-    //assert(source.rejectNode(0));
-    source.rejectNode(0);
+    assert(source.rejectNode(0));
     assert(source.position == 1);
     assert(source.nodePosition == 0);
     assert(!source.hasError);

@@ -32,8 +32,14 @@ struct Buffer(T)
     */
     bool resize(size_t n) @nogc nothrow pure @trusted scope
     {
+        if (n == 0)
+        {
+            pureFree(ptr);
+            buffer_ = null;
+            return true;
+        }
+
         immutable oldLength = buffer_.length;
-        auto ptr = (oldLength > 0) ? &buffer_[0] : null;
         auto newPtr = cast(T*) pureRealloc(ptr, n * T.sizeof);
         if (!newPtr)
         {
@@ -106,5 +112,13 @@ private:
     assert(buffer[0].value == 100);
     assert(buffer[9].value == 100);
     assert(buffer[10].value == 123);
+}
+
+@nogc nothrow pure @safe unittest
+{
+    auto buffer = Buffer!int();
+    assert(buffer.append(123));
+    assert(buffer.resize(0));
+    assert(buffer.length == 0);
 }
 
