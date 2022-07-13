@@ -19,6 +19,15 @@ enum ASTNodeEventType
 }
 
 /**
+AST parse error type.
+*/
+enum ASTParseErrorType
+{
+    none,
+    allocation,
+}
+
+/**
 AST builder source.
 
 Params:
@@ -76,14 +85,24 @@ struct ASTBuilderSource(R, T)
             return events_.length;
         }
 
+        @property ASTParseErrorType error() const
+        {
+            return error_;
+        }
+
+        @property bool hasError() const
+        {
+            return error_ != ASTParseErrorType.none;
+        }
+
         bool startNode(Tag tag)
         {
-            return events_.append(NodeEvent(tag, ASTNodeEventType.start, position));
+            return addEvent(tag, ASTNodeEventType.start);
         }
 
         bool acceptNode(Tag tag)
         {
-            return events_.append(NodeEvent(tag, ASTNodeEventType.end, position));
+            return addEvent(tag, ASTNodeEventType.end);
         }
 
         bool rejectNode(size_t startNodePosition)
@@ -101,7 +120,24 @@ private:
         PositionType position;
     }
 
+    bool addEvent(Tag tag, ASTNodeEventType eventType) @nogc nothrow pure @safe scope
+    {
+        if (hasError)
+        {
+            return false;
+        }
+
+        if (!events_.append(NodeEvent(tag, eventType, position)))
+        {
+            error_ = ASTParseErrorType.allocation;
+            return false;
+        }
+
+        return true;
+    }
+
     Buffer!NodeEvent events_;
+    ASTParseErrorType error_ = ASTParseErrorType.none;
 }
 
 ///
@@ -115,6 +151,8 @@ private:
     assert(source.position == 0);
     assert(source.nodePosition == 0);
     assert(!source.empty);
+    assert(source.error == ASTParseErrorType.none);
+    assert(!source.hasError);
 
     assert(source.startNode(0));
     assert(source.position == 0);
