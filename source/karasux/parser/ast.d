@@ -4,19 +4,10 @@ Parser AST module.
 module karasux.parser.ast;
 
 import karasux.buffer : Buffer;
-import karasux.parser.source.traits :
+import karasux.parser.traits : isParser;
+import karasux.parser.source :
     isInputSource,
     isSeekableSource;
-
-/**
-AST builder source trait.
-*/
-enum isASTBuilderSource(R) = isInputSource!R
-  && is(typeof(R.Tag.init))
-  && is(typeof((scope ref R r) @nogc nothrow pure @safe => r.nodePosition))
-  && is(typeof((scope ref R r) => r.startNode(R.Tag.init)))
-  && is(typeof((scope ref R r) => r.acceptNode(R.Tag.init)))
-  && is(typeof((scope ref R r) { auto p = r.nodePosition; r.rejectNode(p); }));
 
 /**
 AST node event type.
@@ -119,7 +110,6 @@ private:
     import karasux.parser.source.array_source : arraySource;
 
     auto source = astBuilder!int(arraySource("test"));
-    static assert(isASTBuilderSource!(typeof(source)));
 
     assert(source.front == 't');
     assert(source.position == 0);
@@ -166,5 +156,40 @@ ASTBuilderSource!(R, T) astBuilder(T, R)(return scope R source)
     if (isInputSource!R)
 {
     return ASTBuilderSource!(R, T)(source);
+}
+
+/**
+AST node parser.
+
+Params:
+    P = parsers
+*/
+bool astNode(alias P, R, T)(auto scope ref ASTBuilderSource!(R, T) source, T tag)
+    if (isParser!(P, ASTBuilderSource!(R, T)))
+{
+    auto nodePosition = source.nodePosition;
+    if (!source.startNode(tag))
+    {
+        return false;
+    }
+
+    if (!P(source))
+    {
+        source.rejectNode(nodePosition);
+        return false;
+    }
+
+    return source.acceptNode(tag);
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.primitive : symbol;
+    import karasux.parser.source.array_source : arraySource;
+
+    auto source = astBuilder!int(arraySource("test"));
+
+    assert(source.astNode!((scope ref s) => s.symbol('t'))(123));
 }
 
