@@ -157,10 +157,12 @@ private:
     assert(source.startNode(0));
     assert(source.position == 0);
     assert(source.nodePosition == 1);
+    assert(!source.hasError);
 
     assert(source.startNode(123));
     assert(source.position == 0);
     assert(source.nodePosition == 2);
+    assert(!source.hasError);
 
     source.popFront();
 
@@ -168,16 +170,19 @@ private:
     assert(source.position == 1);
     assert(source.nodePosition == 2);
     assert(!source.empty);
+    assert(!source.hasError);
 
     assert(source.acceptNode(123));
 
     assert(source.position == 1);
     assert(source.nodePosition == 3);
+    assert(!source.hasError);
 
     // reject nodes but position is not reverted.
     assert(source.rejectNode(0));
     assert(source.position == 1);
     assert(source.nodePosition == 0);
+    assert(!source.hasError);
 }
 
 /**
