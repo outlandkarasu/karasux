@@ -110,6 +110,36 @@ bool testNot(alias P, S)(auto scope ref S source)
 }
 
 /**
+zero or more parser.
+
+Params:
+    P = inner parser
+    S = source type
+    source = target source
+Returns:
+    repeat inner parser untile matched and return true.
+*/
+bool zeroOrMore(alias P, S)(auto scope ref S source)
+    if (isInputSource!S && isParser!(P, S))
+{
+    while (P(source)) {}
+    return true;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.primitive : symbol;
+    import karasux.parser.source : arraySource;
+
+    auto source = arraySource("tttest");
+    assert(source.zeroOrMore!((ref s) => s.symbol('t')));
+    assert(source.position == 3);
+    assert(source.zeroOrMore!((ref s) => s.symbol('t')));
+    assert(source.position == 3);
+}
+
+/**
 Parsers sequence
 
 Params:
