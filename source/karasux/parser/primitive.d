@@ -269,3 +269,49 @@ bool symbolSet(S, Syms)(auto scope ref S source, Syms s)
     assert(source.position == 0);
 }
 
+/**
+Symbol range parser.
+
+Params:
+    S = source type.
+    Sym = symbol type.
+    source = target source.
+    s = symbol range start.
+    e = symbol range end.
+Returns:
+    true if r front is between s and e.
+*/
+bool symbolRange(S, Sym)(auto scope ref S source, Sym s, Sym e)
+    if (isInputSource!S)
+{
+    if (source.empty || source.front < s || e < source.front)
+    {
+        return false;
+    }
+
+    source.popFront();
+    return true;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import karasux.parser.source : arraySource;
+
+    auto source = arraySource("abc");
+    assert(source.symbolRange('a', 'z'));
+    assert(source.position == 1);
+    assert(source.symbolRange('a', 'b'));
+    assert(source.position == 2);
+
+    source = arraySource("ABC");
+    assert(!source.symbolRange('a', 'z'));
+    assert(source.position == 0);
+    assert(!source.symbolRange('0', '9'));
+    assert(source.position == 0);
+
+    source = arraySource("");
+    assert(!source.symbolRange('a', 'z'));
+    assert(source.position == 0);
+}
+
