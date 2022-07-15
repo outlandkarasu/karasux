@@ -30,7 +30,7 @@ struct Buffer(T)
     Returns:
         true if succeeded.
     */
-    bool resize(size_t n) @nogc nothrow pure @trusted scope
+    bool resize(size_t n) nothrow pure @trusted scope
     {
         if (n == 0)
         {
@@ -41,7 +41,7 @@ struct Buffer(T)
         return realloc(n);
     }
 
-    @nogc nothrow pure @safe
+    nothrow pure @safe
     {
         ref inout(T) opIndex(size_t i) inout return scope
         {
@@ -80,7 +80,7 @@ private:
         buffer_ = null;
     }
 
-    bool realloc(size_t n) @nogc nothrow pure @trusted scope
+    bool realloc(size_t n) nothrow pure @trusted scope
     {
         immutable oldLength = buffer_.length;
         auto newPtr = cast(T*) pureRealloc(ptr, n * T.sizeof);
