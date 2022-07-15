@@ -34,25 +34,11 @@ struct Buffer(T)
     {
         if (n == 0)
         {
-            pureFree(ptr);
-            buffer_ = null;
+            free();
             return true;
         }
 
-        immutable oldLength = buffer_.length;
-        auto newPtr = cast(T*) pureRealloc(ptr, n * T.sizeof);
-        if (!newPtr)
-        {
-            return false;
-        }
-
-        for (size_t i = oldLength; i < n; ++i)
-        {
-            newPtr[i] = T.init;
-        }
-        buffer_ = newPtr[0 .. n];
-
-        return true;
+        return realloc(n);
     }
 
     @nogc nothrow pure @safe
@@ -92,6 +78,24 @@ private:
     {
         pureFree(ptr);
         buffer_ = null;
+    }
+
+    bool realloc(size_t n) @nogc nothrow pure @trusted scope
+    {
+        immutable oldLength = buffer_.length;
+        auto newPtr = cast(T*) pureRealloc(ptr, n * T.sizeof);
+        if (!newPtr)
+        {
+            return false;
+        }
+
+        for (size_t i = oldLength; i < n; ++i)
+        {
+            newPtr[i] = T.init;
+        }
+        buffer_ = newPtr[0 .. n];
+
+        return true;
     }
 
     T[] buffer_;
