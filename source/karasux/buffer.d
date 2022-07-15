@@ -17,9 +17,9 @@ struct Buffer(T)
     */
     @disable this(ref return scope Buffer rhs);
 
-    ~this() @nogc nothrow pure @trusted scope
+    ~this() @nogc nothrow pure @safe scope
     {
-        pureFree(ptr);
+        free();
     }
 
     /*
@@ -86,6 +86,12 @@ private:
     @property inout(T)* ptr() inout @nogc nothrow pure @safe return scope
     {
         return (buffer_.length > 0) ? &buffer_[0] : null;
+    }
+
+    void free() @nogc nothrow pure @trusted scope
+    {
+        pureFree(ptr);
+        buffer_ = null;
     }
 
     T[] buffer_;
