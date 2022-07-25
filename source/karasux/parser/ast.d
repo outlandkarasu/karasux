@@ -311,7 +311,7 @@ bool astNode(alias P, R, T, alias Buffer)(auto scope ref ASTBuilderSource!(R, T,
 nothrow pure @safe unittest
 {
     import karasux.ctfe : staticUnittest;
-    staticUnittest!(
+    alias testFunction = 
     {
         import karasux.parser.primitive : symbol;
         import karasux.parser.source.array_source : arraySource;
@@ -354,6 +354,8 @@ nothrow pure @safe unittest
                 assert(event.type == ASTNodeEventType.end);
             }
         }
-    });
+    };
+    testFunction();
+    staticUnittest!(testFunction);
 }
 
