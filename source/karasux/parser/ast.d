@@ -90,7 +90,7 @@ struct ASTBuilderSource(R, T, alias Buffer)
 
     alias inner this;
 
-    @nogc nothrow pure @safe scope
+    nothrow pure @safe scope
     {
         @property size_t nodePosition() const
         {
@@ -140,7 +140,7 @@ struct ASTBuilderSource(R, T, alias Buffer)
 
 private:
 
-    bool addEvent(Tag tag, ASTNodeEventType eventType) @nogc nothrow pure @safe scope
+    bool addEvent(Tag tag, ASTNodeEventType eventType) nothrow pure @safe scope
     {
         if (hasError)
         {
@@ -222,6 +222,22 @@ auto astBuilder(T, R)(return scope R source)
 }
 
 /**
+Create CTFEable AST builder source.
+
+Params:
+    R = inner source type.
+    T = tag type.
+    source = inner source
+Returns:
+    AST builder source.
+*/
+auto ctfeAstBuilder(T, R)(return scope R source)
+    if (isInputSource!R)
+{
+    return ASTBuilderSource!(R, T, DynamicArrayBuffer)(source);
+}
+
+/**
 AST node parser.
 
 Params:
@@ -289,5 +305,55 @@ bool astNode(alias P, R, T, alias Buffer)(auto scope ref ASTBuilderSource!(R, T,
             assert(event.type == ASTNodeEventType.end);
         }
     }
+}
+
+///
+nothrow pure @safe unittest
+{
+    import karasux.ctfe : staticUnittest;
+    staticUnittest!(
+    {
+        import karasux.parser.primitive : symbol;
+        import karasux.parser.source.array_source : arraySource;
+
+        auto source = ctfeAstBuilder!int(arraySource("test"));
+        alias NodeEvent = typeof(source).NodeEvent;
+
+        assert(source.astNode!((scope ref s) => s.symbol('t'))(123));
+        assert(source.nodePosition == 2);
+
+        foreach (ref const(NodeEvent) event; source)
+        {
+            if (event.position == 0)
+            {
+                assert(event.tag == 123);
+                assert(event.type == ASTNodeEventType.start);
+            }
+            else
+            {
+                assert(event.position == 1);
+                assert(event.tag == 123);
+                assert(event.type == ASTNodeEventType.end);
+            }
+        }
+
+        assert(!source.astNode!((scope ref s) => s.symbol('t'))(125));
+        assert(source.nodePosition == 2);
+
+        foreach (ref const(NodeEvent) event; source)
+        {
+            if (event.position == 0)
+            {
+                assert(event.tag == 123);
+                assert(event.type == ASTNodeEventType.start);
+            }
+            else
+            {
+                assert(event.position == 1);
+                assert(event.tag == 123);
+                assert(event.type == ASTNodeEventType.end);
+            }
+        }
+    });
 }
 
