@@ -5,7 +5,9 @@ module karasux.parser.ast;
 
 import std.traits : ParameterTypeTuple;
 
-import karasux.buffer : CoreMemoryBuffer;
+import karasux.buffer :
+    CoreMemoryBuffer,
+    DynamicArrayBuffer;
 import karasux.parser.traits : isParser;
 import karasux.parser.source :
     isInputSource,
@@ -35,8 +37,9 @@ AST builder source.
 Params:
     R = inner source type
     T = AST tag type
+    Buffer = buffer template
 */
-struct ASTBuilderSource(R, T)
+struct ASTBuilderSource(R, T, alias Buffer)
 {
     static assert(isInputSource!R);
 
@@ -153,7 +156,7 @@ private:
         return true;
     }
 
-    CoreMemoryBuffer!NodeEvent events_;
+    Buffer!NodeEvent events_;
     ASTParseErrorType error_ = ASTParseErrorType.none;
 }
 
@@ -212,10 +215,10 @@ Params:
 Returns:
     AST builder source.
 */
-ASTBuilderSource!(R, T) astBuilder(T, R)(return scope R source)
+auto astBuilder(T, R)(return scope R source)
     if (isInputSource!R)
 {
-    return ASTBuilderSource!(R, T)(source);
+    return ASTBuilderSource!(R, T, CoreMemoryBuffer)(source);
 }
 
 /**
@@ -224,8 +227,8 @@ AST node parser.
 Params:
     P = parsers
 */
-bool astNode(alias P, R, T)(auto scope ref ASTBuilderSource!(R, T) source, T tag)
-    if (isParser!(P, ASTBuilderSource!(R, T)))
+bool astNode(alias P, R, T, alias Buffer)(auto scope ref ASTBuilderSource!(R, T, Buffer) source, T tag)
+    if (isParser!(P, ASTBuilderSource!(R, T, Buffer)))
 {
     auto nodePosition = source.nodePosition;
     if (!source.startNode(tag))
