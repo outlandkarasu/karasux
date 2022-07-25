@@ -5,7 +5,9 @@ module karasux.parser.ast;
 
 import std.traits : ParameterTypeTuple;
 
-import karasux.buffer : Buffer;
+import karasux.buffer :
+    CoreMemoryBuffer,
+    DynamicArrayBuffer;
 import karasux.parser.traits : isParser;
 import karasux.parser.source :
     isInputSource,
@@ -35,8 +37,9 @@ AST builder source.
 Params:
     R = inner source type
     T = AST tag type
+    Buffer = buffer template
 */
-struct ASTBuilderSource(R, T)
+struct ASTBuilderSource(R, T, alias Buffer)
 {
     static assert(isInputSource!R);
 
@@ -87,7 +90,7 @@ struct ASTBuilderSource(R, T)
 
     alias inner this;
 
-    @nogc nothrow pure @safe scope
+    nothrow pure @safe scope
     {
         @property size_t nodePosition() const
         {
@@ -137,7 +140,7 @@ struct ASTBuilderSource(R, T)
 
 private:
 
-    bool addEvent(Tag tag, ASTNodeEventType eventType) @nogc nothrow pure @safe scope
+    bool addEvent(Tag tag, ASTNodeEventType eventType) nothrow pure @safe scope
     {
         if (hasError)
         {
@@ -212,10 +215,26 @@ Params:
 Returns:
     AST builder source.
 */
-ASTBuilderSource!(R, T) astBuilder(T, R)(return scope R source)
+auto astBuilder(T, R)(return scope R source)
     if (isInputSource!R)
 {
-    return ASTBuilderSource!(R, T)(source);
+    return ASTBuilderSource!(R, T, CoreMemoryBuffer)(source);
+}
+
+/**
+Create CTFEable AST builder source.
+
+Params:
+    R = inner source type.
+    T = tag type.
+    source = inner source
+Returns:
+    AST builder source.
+*/
+auto ctfeAstBuilder(T, R)(return scope R source)
+    if (isInputSource!R)
+{
+    return ASTBuilderSource!(R, T, DynamicArrayBuffer)(source);
 }
 
 /**
@@ -224,8 +243,8 @@ AST node parser.
 Params:
     P = parsers
 */
-bool astNode(alias P, R, T)(auto scope ref ASTBuilderSource!(R, T) source, T tag)
-    if (isParser!(P, ASTBuilderSource!(R, T)))
+bool astNode(alias P, R, T, alias Buffer)(auto scope ref ASTBuilderSource!(R, T, Buffer) source, T tag)
+    if (isParser!(P, ASTBuilderSource!(R, T, Buffer)))
 {
     auto nodePosition = source.nodePosition;
     if (!source.startNode(tag))
@@ -286,5 +305,57 @@ bool astNode(alias P, R, T)(auto scope ref ASTBuilderSource!(R, T) source, T tag
             assert(event.type == ASTNodeEventType.end);
         }
     }
+}
+
+///
+nothrow pure @safe unittest
+{
+    import karasux.ctfe : staticUnittest;
+    alias testFunction = 
+    {
+        import karasux.parser.primitive : symbol;
+        import karasux.parser.source.array_source : arraySource;
+
+        auto source = ctfeAstBuilder!int(arraySource("test"));
+        alias NodeEvent = typeof(source).NodeEvent;
+
+        assert(source.astNode!((scope ref s) => s.symbol('t'))(123));
+        assert(source.nodePosition == 2);
+
+        foreach (ref const(NodeEvent) event; source)
+        {
+            if (event.position == 0)
+            {
+                assert(event.tag == 123);
+                assert(event.type == ASTNodeEventType.start);
+            }
+            else
+            {
+                assert(event.position == 1);
+                assert(event.tag == 123);
+                assert(event.type == ASTNodeEventType.end);
+            }
+        }
+
+        assert(!source.astNode!((scope ref s) => s.symbol('t'))(125));
+        assert(source.nodePosition == 2);
+
+        foreach (ref const(NodeEvent) event; source)
+        {
+            if (event.position == 0)
+            {
+                assert(event.tag == 123);
+                assert(event.type == ASTNodeEventType.start);
+            }
+            else
+            {
+                assert(event.position == 1);
+                assert(event.tag == 123);
+                assert(event.type == ASTNodeEventType.end);
+            }
+        }
+    };
+    testFunction();
+    staticUnittest!(testFunction);
 }
 

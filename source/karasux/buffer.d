@@ -8,18 +8,22 @@ import core.memory : pureRealloc, pureFree;
 /**
 Simple memory buffer.
 */
-struct Buffer(T)
+struct Buffer(T, alias Allocator)
 {
-    static assert(__traits(isPOD, T));
+    static assert(is(typeof((scope ref T[] a) nothrow pure @safe => Allocator!T.free(a))));
+    static assert(is(typeof((scope ref T[] a, size_t n) nothrow pure @safe
+    {
+        bool result = Allocator!T.resize(a, n);
+    })));
 
     /*
     Can't copy.
     */
     @disable this(ref return scope Buffer rhs);
 
-    ~this() @nogc nothrow pure @trusted scope
+    ~this() @nogc nothrow pure @safe scope
     {
-        pureFree(ptr);
+        Allocator!T.free(buffer_);
     }
 
     /*
@@ -30,32 +34,12 @@ struct Buffer(T)
     Returns:
         true if succeeded.
     */
-    bool resize(size_t n) @nogc nothrow pure @trusted scope
+    bool resize(size_t n) nothrow pure @safe scope
     {
-        if (n == 0)
-        {
-            pureFree(ptr);
-            buffer_ = null;
-            return true;
-        }
-
-        immutable oldLength = buffer_.length;
-        auto newPtr = cast(T*) pureRealloc(ptr, n * T.sizeof);
-        if (!newPtr)
-        {
-            return false;
-        }
-
-        for (size_t i = oldLength; i < n; ++i)
-        {
-            newPtr[i] = T.init;
-        }
-        buffer_ = newPtr[0 .. n];
-
-        return true;
+        return Allocator!T.resize(buffer_, n);
     }
 
-    @nogc nothrow pure @safe
+    nothrow pure @safe
     {
         ref inout(T) opIndex(size_t i) inout return scope
         {
@@ -83,11 +67,6 @@ struct Buffer(T)
 
 private:
 
-    @property inout(T)* ptr() inout @nogc nothrow pure @safe return scope
-    {
-        return (buffer_.length > 0) ? &buffer_[0] : null;
-    }
-
     T[] buffer_;
 }
 
@@ -99,7 +78,7 @@ private:
         int value = 100;
     }
 
-    auto buffer = Buffer!Data();
+    auto buffer = Buffer!(Data, CoreMemoryAllocator)();
     assert(buffer.length == 0);
 
     assert(buffer.resize(10));
@@ -116,9 +95,163 @@ private:
 
 @nogc nothrow pure @safe unittest
 {
-    auto buffer = Buffer!int();
+    auto buffer = Buffer!(int, CoreMemoryAllocator)();
     assert(buffer.append(123));
     assert(buffer.resize(0));
     assert(buffer.length == 0);
 }
+
+/**
+Allocator by core.memory.
+*/
+template CoreMemoryAllocator(T)
+{
+    static assert(__traits(isPOD, T));
+
+    bool resize(scope ref T[] array, size_t n) @nogc nothrow pure @trusted
+        out(; array.length == n)
+    {
+        // free if zero allocation.
+        if (n == 0)
+        {
+            free(array);
+            return true;
+        }
+
+        // resize array memory.
+        immutable oldLength = array.length;
+        auto ptr = (oldLength == 0) ? null : &array[0];
+        auto newPtr = cast(T*) pureRealloc(ptr, T.sizeof * n);
+        if (!newPtr)
+        {
+            return false;
+        }
+
+        // initialize new elements.
+        if (oldLength < n)
+        {
+            newPtr[oldLength .. n] = T.init;
+        }
+
+        array = newPtr[0 .. n];
+        return true;
+    }
+
+    void free(scope ref T[] array) @nogc nothrow pure @trusted
+        out(; array.length == 0)
+    {
+        if (array.length > 0)
+        {
+            pureFree(&array[0]);
+        }
+        array = null;
+    }
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    alias Allocator = CoreMemoryAllocator!int;
+
+    int[] array;
+    Allocator.resize(array, 4);
+    scope(exit) Allocator.free(array);
+
+    assert(array.length == 4);
+
+    foreach (i, ref e; array)
+    {
+        assert(e == int.init);
+        e = cast(int) i;
+    }
+
+    Allocator.resize(array, 8);
+    assert(array.length == 8);
+
+    foreach (i, e; array[0 .. 4])
+    {
+        assert(e == i);
+    }
+
+    foreach (e; array[4 .. $])
+    {
+        assert(e == int.init);
+    }
+
+    Allocator.resize(array, 2);
+    assert(array.length == 2);
+    assert(array[0] == 0);
+    assert(array[1] == 1);
+
+    Allocator.free(array);
+    assert(array.length == 0);
+}
+
+/**
+Allocator by dynamic array.
+*/
+template DynamicArrayAllocator(T)
+{
+    bool resize()(scope ref T[] array, size_t n)
+        out(; array.length == n)
+    {
+        array.length = n;
+        return true;
+    }
+
+    void free()(scope ref T[] array)
+        out(; array.length == 0)
+    {
+        array = null;
+    }
+}
+
+///
+nothrow pure @safe unittest
+{
+    alias Allocator = DynamicArrayAllocator!int;
+
+    int[] array;
+    Allocator.resize(array, 4);
+    scope(exit) Allocator.free(array);
+
+    assert(array.length == 4);
+
+    foreach (i, ref e; array)
+    {
+        assert(e == int.init);
+        e = cast(int) i;
+    }
+
+    Allocator.resize(array, 8);
+    assert(array.length == 8);
+
+    foreach (i, e; array[0 .. 4])
+    {
+        assert(e == i);
+    }
+
+    foreach (e; array[4 .. $])
+    {
+        assert(e == int.init);
+    }
+
+    Allocator.resize(array, 2);
+    assert(array.length == 2);
+    assert(array[0] == 0);
+    assert(array[1] == 1);
+
+    Allocator.free(array);
+    assert(array.length == 0);
+}
+
+/**
+Core memory buffer.
+*/
+alias CoreMemoryBuffer(T) = Buffer!(T, CoreMemoryAllocator);
+
+/**
+Dynamic array buffer.
+*/
+alias DynamicArrayBuffer(T) = Buffer!(T, DynamicArrayAllocator);
 
