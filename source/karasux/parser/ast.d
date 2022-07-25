@@ -5,7 +5,7 @@ module karasux.parser.ast;
 
 import std.traits : ParameterTypeTuple;
 
-import karasux.buffer : Buffer;
+import karasux.buffer : CoreMemoryBuffer;
 import karasux.parser.traits : isParser;
 import karasux.parser.source :
     isInputSource,
@@ -153,7 +153,7 @@ private:
         return true;
     }
 
-    Buffer!NodeEvent events_;
+    CoreMemoryBuffer!NodeEvent events_;
     ASTParseErrorType error_ = ASTParseErrorType.none;
 }
 
