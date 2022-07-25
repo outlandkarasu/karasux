@@ -151,9 +151,11 @@ template CoreMemoryAllocator(T)
 ///
 @nogc nothrow pure @safe unittest
 {
+    alias Allocator = CoreMemoryAllocator!int;
+
     int[] array;
-    CoreMemoryAllocator!int.resize(array, 4);
-    scope(exit) CoreMemoryAllocator!int.free(array);
+    Allocator.resize(array, 4);
+    scope(exit) Allocator.free(array);
 
     assert(array.length == 4);
 
@@ -163,7 +165,7 @@ template CoreMemoryAllocator(T)
         e = cast(int) i;
     }
 
-    CoreMemoryAllocator!int.resize(array, 8);
+    Allocator.resize(array, 8);
     assert(array.length == 8);
 
     foreach (i, e; array[0 .. 4])
@@ -176,12 +178,70 @@ template CoreMemoryAllocator(T)
         assert(e == int.init);
     }
 
-    CoreMemoryAllocator!int.resize(array, 2);
+    Allocator.resize(array, 2);
     assert(array.length == 2);
     assert(array[0] == 0);
     assert(array[1] == 1);
 
-    CoreMemoryAllocator!int.free(array);
+    Allocator.free(array);
+    assert(array.length == 0);
+}
+
+/**
+Allocator by dynamic array.
+*/
+template DynamicArrayAllocator(T)
+{
+    bool resize()(scope ref T[] array, size_t n)
+        out(; array.length == n)
+    {
+        array.length = n;
+        return true;
+    }
+
+    void free()(scope ref T[] array)
+        out(; array.length == 0)
+    {
+        array = null;
+    }
+}
+
+///
+nothrow pure @safe unittest
+{
+    alias Allocator = DynamicArrayAllocator!int;
+
+    int[] array;
+    Allocator.resize(array, 4);
+    scope(exit) Allocator.free(array);
+
+    assert(array.length == 4);
+
+    foreach (i, ref e; array)
+    {
+        assert(e == int.init);
+        e = cast(int) i;
+    }
+
+    Allocator.resize(array, 8);
+    assert(array.length == 8);
+
+    foreach (i, e; array[0 .. 4])
+    {
+        assert(e == i);
+    }
+
+    foreach (e; array[4 .. $])
+    {
+        assert(e == int.init);
+    }
+
+    Allocator.resize(array, 2);
+    assert(array.length == 2);
+    assert(array[0] == 0);
+    assert(array[1] == 1);
+
+    Allocator.free(array);
     assert(array.length == 0);
 }
 
@@ -189,4 +249,9 @@ template CoreMemoryAllocator(T)
 Core memory buffer.
 */
 alias CoreMemoryBuffer(T) = Buffer!(T, CoreMemoryAllocator);
+
+/**
+Dynamic array buffer.
+*/
+alias DynamicArrayBuffer(T) = Buffer!(T, DynamicArrayAllocator);
 
