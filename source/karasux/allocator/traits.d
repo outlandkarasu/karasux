@@ -51,3 +51,51 @@ enum isAllocator(A) = is(typeof((ref A a) {
     static assert(!isAllocator!(MissingAllocate));
 }
 
+/**
+Reallocateable allocator traits.
+*/
+enum isReallocateableAllocator(A) = isAllocator!A && is(typeof((ref A a) {
+    auto allocator = a;
+    Memory!A data = allocator.allocate(cast(size_t) 100);
+    if (a.reallocate(data, cast(size_t) 1000)) { }
+}));
+
+///
+@nogc nothrow pure @safe unittest
+{
+    struct Allocator
+    {
+        Memory!Allocator allocate(size_t n) @nogc nothrow pure @safe scope
+        {
+            return Memory!Allocator.init;
+        }
+
+        void free(ref Memory!Allocator memory) @nogc nothrow pure @safe scope
+        {
+            memory = Memory!Allocator.init;
+        }
+
+        bool reallocate(ref Memory!Allocator memory, size_t n) @nogc nothrow pure @safe scope
+        {
+            return false;
+        }
+    }
+
+    static assert(isReallocateableAllocator!Allocator);
+
+    struct MissingReallocate
+    {
+        Memory!Allocator allocate(size_t n) @nogc nothrow pure @safe scope
+        {
+            return Memory!Allocator.init;
+        }
+
+        void free(ref Memory!Allocator memory) @nogc nothrow pure @safe scope
+        {
+            memory = Memory!Allocator.init;
+        }
+    }
+    static assert(!isAllocator!(MissingReallocate));
+    static assert(!isReallocateableAllocator!(MissingReallocate));
+}
+
