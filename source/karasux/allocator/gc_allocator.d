@@ -6,14 +6,14 @@ module karasux.allocator.gc_allocator;
 import std.typecons : Nullable, nullable;
 
 static import karasux.allocator.memory;
-import karasux.allocator.traits : isReallocateableAllocator, isAllocator;
+import karasux.allocator.traits : isReallocateableAllocator;
 
 /**
 GC allocator.
 */
 struct GCAllocator
 {
-    static assert(isAllocator!GCAllocator);
+    static assert(isReallocateableAllocator!GCAllocator);
     alias Memory = karasux.allocator.memory.Memory!(GCAllocator);
 
     Nullable!Memory allocate(size_t n) const nothrow pure @safe scope
