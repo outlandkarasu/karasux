@@ -64,7 +64,7 @@ private:
     invariant
     {
         assert(readPosition_ <= writePosition_);
-        assert(readPosition_ <= entries_.length);
+        assert(readPosition_ < entries_.length);
         assert(writePosition_ - readPosition_ <= entries_.length);
     }
 }
