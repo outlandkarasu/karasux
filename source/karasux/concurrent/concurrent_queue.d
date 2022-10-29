@@ -4,6 +4,8 @@ Concurrent queue module.
 module karasux.concurrent.concurrent_queue;
 
 import core.time : Duration;
+import core.sync.event : Event;
+import core.sync.mutex : Mutex;
 
 private:
 
@@ -14,9 +16,10 @@ struct ConcurrentQueue(T)
 {
     @disable this();
 
-    this(size_t n) nothrow pure @safe scope
+    this(size_t n) nothrow @safe scope
     {
         this.entries_ = new T[n];
+        this.mutex_ = new Mutex();
     }
 
     bool write(Args...)(Duration timeout, Args args)
@@ -27,7 +30,12 @@ struct ConcurrentQueue(T)
         }
 
         entries_[toActualPosition(writePosition_)] = T(args);
+
+        mutex_.lock_nothrow();
+        scope(exit) mutex_.unlock_nothrow();
+
         ++writePosition_;
+
         return true;
     }
 
@@ -40,6 +48,9 @@ struct ConcurrentQueue(T)
 
         dest = entries_[readPosition_];
         destroy(entries_[readPosition_]);
+
+        mutex_.lock_nothrow();
+        scope(exit) mutex_.unlock_nothrow();
 
         ++readPosition_;
         if (readPosition_ >= entries_.length)
@@ -55,6 +66,7 @@ private:
     T[] entries_;
     size_t readPosition_;
     size_t writePosition_;
+    Mutex mutex_;
 
     size_t toActualPosition(size_t pos) const @nogc nothrow pure @safe scope
     {
@@ -70,7 +82,7 @@ private:
 }
 
 ///
-nothrow pure @safe unittest
+nothrow @safe unittest
 {
     import core.time : seconds;
 
