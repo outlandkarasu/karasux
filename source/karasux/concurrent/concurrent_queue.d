@@ -4,7 +4,7 @@ Concurrent queue module.
 module karasux.concurrent.concurrent_queue;
 
 import core.time : Duration;
-import core.sync.event : Event;
+import core.sync.condition : Condition;
 import core.sync.mutex : Mutex;
 
 private:
@@ -16,17 +16,25 @@ struct ConcurrentQueue(T)
 {
     @disable this();
 
-    this(size_t n) nothrow @safe scope
+    this(size_t n) nothrow @trusted scope
     {
         this.entries_ = new T[n];
         this.mutex_ = new Mutex();
+        this.writeCondition_ = new Condition(new Mutex());
+        this.readCondition_ = new Condition(new Mutex());
     }
 
     bool write(Args...)(Duration timeout, Args args)
     {
-        if ((writePosition_ - readPosition_) >= entries_.length)
+        while ((writePosition_ - readPosition_) >= entries_.length)
         {
-            return false;
+            synchronized (readCondition_.mutex)
+            {
+                if (!readCondition_.wait(timeout))
+                {
+                    return false;
+                }
+            }
         }
 
         entries_[toActualPosition(writePosition_)] = T(args);
@@ -35,15 +43,22 @@ struct ConcurrentQueue(T)
         scope(exit) mutex_.unlock_nothrow();
 
         ++writePosition_;
+        writeCondition_.notify();
 
         return true;
     }
 
     bool read(Duration timeout, scope ref T dest)
     {
-        if (readPosition_ == writePosition_)
+        while (readPosition_ == writePosition_)
         {
-            return false;
+            synchronized (writeCondition_.mutex)
+            {
+                if (!writeCondition_.wait(timeout))
+                {
+                    return false;
+                }
+            }
         }
 
         dest = entries_[readPosition_];
@@ -58,6 +73,7 @@ struct ConcurrentQueue(T)
             readPosition_ -= entries_.length;
             writePosition_ -= entries_.length;
         }
+        readCondition_.notify();
 
         return true;
     }
@@ -67,6 +83,8 @@ private:
     size_t readPosition_;
     size_t writePosition_;
     Mutex mutex_;
+    Condition writeCondition_;
+    Condition readCondition_;
 
     size_t toActualPosition(size_t pos) const @nogc nothrow pure @safe scope
     {
@@ -82,7 +100,7 @@ private:
 }
 
 ///
-nothrow @safe unittest
+unittest
 {
     import core.time : seconds;
 
