@@ -26,8 +26,18 @@ struct ConcurrentQueue(T)
 
     bool write(Args...)(Duration timeout, Args args)
     {
+        if (writeClosed_)
+        {
+            return false;
+        }
+
         while ((writePosition_ - readPosition_) >= entries_.length)
         {
+            if (readClosed_)
+            {
+                return false;
+            }
+
             synchronized (readCondition_.mutex)
             {
                 if (!readCondition_.wait(timeout))
@@ -50,8 +60,18 @@ struct ConcurrentQueue(T)
 
     bool read(Duration timeout, scope ref T dest)
     {
+        if (readClosed_)
+        {
+            return false;
+        }
+
         while (readPosition_ == writePosition_)
         {
+            if (writeClosed_)
+            {
+                return false;
+            }
+
             synchronized (writeCondition_.mutex)
             {
                 if (!writeCondition_.wait(timeout))
@@ -78,10 +98,25 @@ struct ConcurrentQueue(T)
         return true;
     }
 
+    @property @nogc nothrow pure @safe scope
+    {
+        bool readClosed() const
+        {
+            return readClosed_;
+        }
+
+        bool writeClosed() const
+        {
+            return (readPosition_ == writePosition_) && writeClosed_;
+        }
+    }
+
 private:
     T[] entries_;
     size_t readPosition_;
     size_t writePosition_;
+    bool readClosed_;
+    bool writeClosed_;
     Mutex mutex_;
     Condition writeCondition_;
     Condition readCondition_;
