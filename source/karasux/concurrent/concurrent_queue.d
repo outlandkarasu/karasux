@@ -31,7 +31,7 @@ struct ConcurrentQueue(T)
             return false;
         }
 
-        while ((writePosition_ - readPosition_) >= entries_.length)
+        while (isFull)
         {
             if (readClosed_)
             {
@@ -65,7 +65,7 @@ struct ConcurrentQueue(T)
             return false;
         }
 
-        while (readPosition_ == writePosition_)
+        while (isEmpty)
         {
             if (writeClosed_)
             {
@@ -109,6 +109,16 @@ struct ConcurrentQueue(T)
         {
             return (readPosition_ == writePosition_) && writeClosed_;
         }
+
+        bool isEmpty() const
+        {
+            return readPosition_ == writePosition_;
+        }
+
+        bool isFull() const
+        {
+            return (writePosition_ - readPosition_) >= entries_.length;
+        }
     }
 
 private:
@@ -145,17 +155,25 @@ unittest
     }
 
     auto queue = ConcurrentQueue!Item(4);
+    assert(queue.isEmpty);
+
     immutable timeout = 1.seconds;
     assert(queue.write(timeout, "1"));
+    assert(!queue.isEmpty);
+
     assert(queue.write(timeout, "2"));
     assert(queue.write(timeout, "3"));
     assert(queue.write(timeout, "4"));
+
+    assert(queue.isFull);
     assert(!queue.write(timeout, "5"));
 
     Item readed;
     assert(queue.read(timeout, readed) && readed.value == "1");
+    assert(!queue.isFull);
 
     assert(queue.write(timeout, "5"));
+    assert(queue.isFull);
     assert(!queue.write(timeout, "6"));
 
     assert(queue.read(timeout, readed) && readed.value == "2");
