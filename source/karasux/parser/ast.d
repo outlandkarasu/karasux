@@ -215,7 +215,7 @@ Params:
 Returns:
     AST builder source.
 */
-auto astBuilder(T, R)(return scope R source)
+auto astBuilder(T, R)(R source)
     if (isInputSource!R)
 {
     return ASTBuilderSource!(R, T, CoreMemoryBuffer)(source);
@@ -231,7 +231,7 @@ Params:
 Returns:
     AST builder source.
 */
-auto ctfeAstBuilder(T, R)(return scope R source)
+auto ctfeAstBuilder(T, R)(R source)
     if (isInputSource!R)
 {
     return ASTBuilderSource!(R, T, DynamicArrayBuffer)(source);
